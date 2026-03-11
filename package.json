@@ -1,0 +1,39 @@
+{
+  "name": "syt-wallet-v1",
+  "version": "1.0.0",
+  "description": "SYT Wallet - Telegram Mini App with Vue 3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "vue": "^3.4.15",
+    "@supabase/supabase-js": "^2.39.0",
+    "pinia": "^2.1.7",
+    "vue-router": "^4.2.5",
+    "axios": "^1.6.2",
+    "lucide-vue-next": "^0.294.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.3",
+    "vite": "^5.0.11",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.20.1",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33"
+  },
+  "keywords": [
+    "telegram-mini-app",
+    "wallet",
+    "vue3",
+    "pinia",
+    "supabase"
+  ],
+  "author": "SYT Team",
+  "license": "MIT"
+}
