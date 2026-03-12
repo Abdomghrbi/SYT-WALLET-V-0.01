@@ -3,6 +3,13 @@ import { defineStore } from 'pinia'
 import { supabase } from '../config/supabase'
 import { supabaseAdmin } from '../config/supabaseAdmin'
 
+// توليد عنوان محفظة تلقائي من telegramId
+const generateWalletAddress = (telegramId) => {
+  const prefix = '0x'
+  const hash = telegramId.toString(16).padStart(40, '0')
+  return prefix + hash
+}
+
 export const useStore = defineStore('main', {
   state: () => ({
     user: null,
@@ -41,6 +48,7 @@ export const useStore = defineStore('main', {
         if (user) {
           console.log('مستخدم موجود:', user.id)
           
+          // تحديث آخر دخول
           await supabaseAdmin
             .from('users')
             .update({ last_login: new Date().toISOString() })
@@ -63,6 +71,7 @@ export const useStore = defineStore('main', {
             last_name: tgUser.last_name,
             photo_url: tgUser.photo_url,
             language_code: tgUser.language_code || 'ar',
+            wallet_address: generateWalletAddress(tgUser.id),
             balance: 0,
             total_earned: 0,
             referral_count: 0,
