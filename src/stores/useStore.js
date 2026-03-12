@@ -10,6 +10,11 @@ const generateWalletAddress = (telegramId) => {
   return prefix + hash
 }
 
+// توليد كود إحالة تلقائي
+const generateReferralCode = () => {
+  return 'SYT' + Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
 export const useStore = defineStore('main', {
   state: () => ({
     user: null,
@@ -72,6 +77,7 @@ export const useStore = defineStore('main', {
             photo_url: tgUser.photo_url,
             language_code: tgUser.language_code || 'ar',
             wallet_address: generateWalletAddress(tgUser.id),
+            referral_code: generateReferralCode(),
             balance: 0,
             total_earned: 0,
             referral_count: 0,
