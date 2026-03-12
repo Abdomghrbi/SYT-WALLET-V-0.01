@@ -10,7 +10,7 @@
         <div class="flex items-center gap-3">
 
           <div class="bg-blue-500/20 p-2 rounded-lg">
-            <GiftIcon size="20" class="text-blue-400" />
+            <GiftIcon size="20" class="text-blue-400"/>
           </div>
 
           <div>
@@ -49,19 +49,13 @@
 </template>
 
 <script>
-
-/* أدوات Vue */
 import { ref, onMounted } from 'vue'
-
-/* اتصال Supabase */
 import { supabase } from '../config/supabase'
-
-/* الأيقونة */
 import { Gift as GiftIcon } from 'lucide-vue-next'
 
 export default {
 
-  name: 'Tasks',
+  name:'Tasks',
 
   components:{
     GiftIcon
@@ -80,67 +74,49 @@ export default {
     const statusText = ref("جارٍ التحقق...")
     const loading = ref(false)
 
-    /* UUID ثابت للمكافأة اليومية */
     const DAILY_TASK_ID = "11111111-1111-1111-1111-111111111111"
 
-    /* التحقق من آخر استلام */
     const checkDailyReward = async ()=>{
 
-      try{
+      const { data } = await supabase
+      .from('user_tasks')
+      .select('claimed_at')
+      .eq('user_id', props.user.id)
+      .eq('task_id', DAILY_TASK_ID)
+      .order('claimed_at',{ ascending:false })
+      .limit(1)
 
-        const { data, error } = await supabase
-        .from('user_tasks')
-        .select('claimed_at')
-        .eq('user_id', props.user.id)
-        .eq('task_id', DAILY_TASK_ID)
-        .order('claimed_at',{ ascending:false })
-        .limit(1)
+      if(!data || data.length === 0){
 
-        if(error){
-          console.error("خطأ جلب المكافأة", error)
-          return
-        }
+        canClaim.value = true
+        statusText.value = "متاحة الآن"
+        return
 
-        if(!data || data.length === 0){
+      }
 
-          canClaim.value = true
-          statusText.value = "متاحة الآن"
-          return
+      const lastClaim = new Date(data[0].claimed_at)
+      const now = new Date()
 
-        }
+      const diffHours = (now - lastClaim) / (1000*60*60)
 
-        const lastClaim = new Date(data[0].claimed_at)
-        const now = new Date()
+      if(diffHours >= 24){
 
-        const diffHours = (now - lastClaim) / (1000*60*60)
+        canClaim.value = true
+        statusText.value = "متاحة الآن"
 
-        if(diffHours >= 24){
+      }else{
 
-          canClaim.value = true
-          statusText.value = "متاحة الآن"
+        const remaining = Math.ceil(24 - diffHours)
 
-        }else{
-
-          const remaining = Math.ceil(24 - diffHours)
-
-          canClaim.value = false
-          statusText.value = `متاحة بعد ${remaining} ساعة`
-
-        }
-
-      }catch(err){
-
-        console.error("خطأ غير متوقع", err)
+        canClaim.value = false
+        statusText.value = `متاحة بعد ${remaining} ساعة`
 
       }
 
     }
 
 
-    /* استلام المكافأة */
     const claimReward = async ()=>{
-
-      console.log("تم الضغط على الزر")
 
       if(!canClaim.value) return
 
@@ -150,81 +126,52 @@ export default {
 
       try{
 
-        /* تسجيل المهمة */
-
-        const { error:taskError } = await supabase
+        await supabase
         .from('user_tasks')
         .insert({
           user_id: props.user.id,
           task_id: DAILY_TASK_ID,
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          claimed_at: new Date().toISOString(),
-          reward_claimed: reward
+          status:'completed',
+          completed_at:new Date().toISOString(),
+          claimed_at:new Date().toISOString(),
+          reward_claimed:reward
         })
 
-        if(taskError){
 
-          console.error("خطأ تسجيل المهمة", taskError)
-          loading.value = false
-          return
-
-        }
-
-
-        /* جلب الرصيد الحالي */
-
-        const { data:userData, error:userError } = await supabase
+        const { data:userData } = await supabase
         .from('users')
         .select('balance')
-        .eq('id', props.user.id)
+        .eq('id',props.user.id)
         .single()
-
-        if(userError){
-
-          console.error("خطأ جلب الرصيد", userError)
-          loading.value = false
-          return
-
-        }
 
         const newBalance = (userData.balance || 0) + reward
 
 
-        /* تحديث الرصيد */
-
-        const { error:updateError } = await supabase
+        await supabase
         .from('users')
-        .update({ balance: newBalance })
-        .eq('id', props.user.id)
+        .update({ balance:newBalance })
+        .eq('id',props.user.id)
 
-        if(updateError){
 
-          console.error("خطأ تحديث الرصيد", updateError)
-          loading.value = false
-          return
+        /* تحديث الرصيد في الواجهة فوراً */
 
-        }
+        props.user.balance = newBalance
 
-        console.log("تم إضافة المكافأة بنجاح")
-
-        loading.value = false
 
         checkDailyReward()
 
-      }catch(err){
+      }catch(e){
 
-        console.error("خطأ غير متوقع", err)
-        loading.value = false
+        console.error(e)
 
       }
+
+      loading.value = false
 
     }
 
 
     onMounted(()=>{
-
-      console.log("user id:", props.user.id)
 
       checkDailyReward()
 
