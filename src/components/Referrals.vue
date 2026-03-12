@@ -19,20 +19,24 @@
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 mb-4">
       <p class="text-blue-200 text-sm mb-3">كود الإحالة الخاص بك</p>
       
-      <div class="bg-black/30 rounded-lg p-3 mb-3">
+      <div v-if="stats.referralCode" class="bg-black/30 rounded-lg p-3 mb-3">
         <code class="text-xl font-bold text-white tracking-wider">{{ stats.referralCode }}</code>
+      </div>
+      
+      <div v-else class="bg-black/30 rounded-lg p-3 mb-3">
+        <p class="text-gray-400 text-sm">جاري توليد الكود...</p>
       </div>
 
       <div class="flex gap-2">
         <button
-  @click="copyReferral"
-  class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150"
->
-  <CopyIcon size="16" /> نسخ الرابط
-</button>
+          @click="copyReferral"
+          class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150"
+        >
+          <CopyIcon size="16" /> نسخ الرابط
+        </button>
         <button
           @click="shareReferral"
-          class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2"
+          class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 transition-all duration-150"
         >
           <ShareIcon size="16" /> مشاركة
         </button>
@@ -98,7 +102,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { supabase } from '../config/supabase'
 import { Users as UsersIcon, Gift as GiftIcon, Copy as CopyIcon, Share2 as ShareIcon } from 'lucide-vue-next'
 
@@ -124,44 +128,88 @@ export default {
       referralCode: ''
     })
 
-    onMounted(() => {
-      fetchReferralData()
-    })
+    // مراقبة تغيرات user
+    watch(() => props.user, (newUser) => {
+      if (newUser?.id) {
+        fetchReferralData()
+      }
+    }, { immediate: true })
 
     const fetchReferralData = async () => {
-      const { data: userData } = await supabase
-        .from('users')
-        .select('referral_code, referral_count, referral_earnings')
-        .eq('id', props.user.id)
-        .single()
-
-      if (userData) {
+      if (!props.user?.id) return
+      
+      try {
+        // جلب بيانات المستخدم مباشرة من props.user أو من Supabase
+        const userData = props.user
+        
         stats.value = {
           referralCount: userData.referral_count || 0,
           referralEarnings: userData.referral_earnings || 0,
           referralCode: userData.referral_code || ''
         }
+
+        // إذا لم يكن هناك كود إحالة، نولده
+        if (!stats.value.referralCode && userData.id) {
+          await generateReferralCode(userData.id)
+        }
+
+        // جلب قائمة الإحالات
+        const { data: refs } = await supabase
+          .from('referrals')
+          .select(`
+            *,
+            referred:referred_id (
+              first_name,
+              username,
+              created_at
+            )
+          `)
+          .eq('referrer_id', userData.id)
+          .order('created_at', { ascending: false })
+
+        referrals.value = refs || []
+      } catch (error) {
+        console.error('خطأ في جلب الإحالات:', error)
       }
-
-      const { data: refs } = await supabase
-        .from('referrals')
-        .select('*, referred:referred_id (first_name, username, created_at)')
-        .eq('referrer_id', props.user.id)
-        .order('created_at', { ascending: false })
-
-      referrals.value = refs || []
     }
 
-    const formatBalance = (val) => parseFloat(val || 0).toFixed(4)
-    const formatDate = (date) => new Date(date).toLocaleDateString('ar-SA')
+    const generateReferralCode = async (userId) => {
+      const code = 'SYT' + Math.random().toString(36).substring(2, 8).toUpperCase()
+      
+      const { data, error } = await supabase
+        .from('users')
+        .update({ referral_code: code })
+        .eq('id', userId)
+        .select('referral_code')
+        .single()
+
+      if (!error && data) {
+        stats.value.referralCode = data.referral_code
+      }
+    }
+
+    const formatBalance = (val) => {
+      return val ? parseFloat(val).toFixed(4) : '0.0000'
+    }
+
+    const formatDate = (date) => {
+      return date ? new Date(date).toLocaleDateString('ar-SA') : ''
+    }
 
     const copyReferral = () => {
-      const link = `https://t.me/syt_wallet_bot?start=${stats.value.referralCode}`
+      const code = stats.value.referralCode
+      if (!code) return
+      
+      const link = `https://t.me/syt_wallet_bot?start=${code}`
       navigator.clipboard.writeText(link)
+      alert('تم نسخ الرابط!')
     }
 
     const shareReferral = () => {
-      const link = `https://t.me/syt_wallet_bot?start=${stats.value.referralCode}`
+      const code = stats.value.referralCode
+      if (!code) return
+      
+      const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
       const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀\n\n${link}`
       
       if (window.Telegram?.WebApp) {
@@ -170,6 +218,7 @@ export default {
         )
       } else {
         navigator.clipboard.writeText(text)
+        alert('تم نسخ الرابط!')
       }
     }
 
@@ -184,3 +233,4 @@ export default {
   }
 }
 </script>
+
