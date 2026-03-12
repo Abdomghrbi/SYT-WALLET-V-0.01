@@ -9,10 +9,7 @@
       </h2>
       <p class="text-blue-200 text-sm">≈ ${{ formatUsd(balance) }} USD</p>
     </div>
-
-    <!-- عنوان المحفظة -->
     
-
     <!-- أزرار سريعة -->
     <div class="grid grid-cols-2 gap-3 mb-4">
       <button class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2">
