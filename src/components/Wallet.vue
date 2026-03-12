@@ -1,13 +1,12 @@
-
 <template>
   <div class="p-4 pb-20">
     <!-- رصيد -->
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
       <p class="text-blue-200 text-sm mb-1">الرصيد المتاح</p>
       <h2 class="text-4xl font-bold text-white mb-2">
-        {{ formatBalance(balance) }} <span class="text-xl">SYT</span>
+        {{ formatBalance(user?.balance || 0) }} <span class="text-xl">SYT</span>
       </h2>
-      <p class="text-blue-200 text-sm">≈ ${{ formatUsd(balance) }} USD</p>
+      <p class="text-blue-200 text-sm">≈ ${{ formatUsd(user?.balance || 0) }} USD</p>
     </div>
     
     <!-- أزرار سريعة -->
@@ -60,20 +59,20 @@ import { ArrowDownLeft as ArrowDownLeftIcon, ArrowUpRight as ArrowUpRightIcon, H
 export default {
   name: 'Wallet',
   components: { ArrowDownLeftIcon, ArrowUpRightIcon, HistoryIcon, CopyIcon },
-  props: { user: { type: Object, required: true } },
+  props: { 
+    user: { 
+      type: Object, 
+      required: true 
+    } 
+  },
   setup(props) {
-    const balance = ref(0)
-    const walletAddress = ref('')
+    const balance = ref(props.user?.balance || 0)
+    const walletAddress = ref(props.user?.wallet_address || '')
     const transactions = ref([])
 
-    onMounted(() => fetchWalletData())
+    onMounted(() => fetchTransactions())
 
-    const fetchWalletData = async () => {
-      const { data } = await supabase.from('users').select('balance, wallet_address').eq('id', props.user.id).single()
-      if (data) {
-        balance.value = data.balance || 0
-        walletAddress.value = data.wallet_address || ''
-      }
+    const fetchTransactions = async () => {
       const { data: txs } = await supabase.from('transactions').select('*').eq('user_id', props.user.id).order('created_at', { ascending: false }).limit(20)
       transactions.value = txs || []
     }
@@ -88,8 +87,16 @@ export default {
     const getTxLabel = (type) => ({ deposit: 'إيداع', withdraw: 'سحب', reward: 'مكافأة', referral_bonus: 'إحالة', task_bonus: 'مهمة' }[type] || type)
     const formatTxAmount = (amount, type) => `${['deposit', 'reward', 'referral_bonus', 'task_bonus'].includes(type) ? '+' : '-'}${amount}`
 
-    return { balance, transactions, formatBalance, formatUsd, formatDate, getTxIcon, getTxColor, getTxLabel, formatTxAmount }
- 
+    return { 
+      balance, 
+      transactions, 
+      formatBalance, 
+      formatUsd, 
+      formatDate, 
+      getTxIcon, 
+      getTxColor, 
+      getTxLabel, 
+      formatTxAmount 
     }
   }
 }
