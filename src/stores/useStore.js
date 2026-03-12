@@ -1,148 +1,89 @@
 
-import { defineStore } from 'pinia'
-import { supabase } from '../config/supabase'
-import { supabaseAdmin } from '../config/supabaseAdmin'
+async login(initData) {
+  try {
+    const tg = window.Telegram?.WebApp
+    if (!tg?.initDataUnsafe?.user) {
+      throw new Error('بيانات Telegram غير متوفرة')
+    }
 
-export const useStore = defineStore('main', {
-  state: () => ({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true
-  }),
+    const tgUser = tg.initDataUnsafe.user
+    console.log('Telegram user ID:', tgUser.id)
 
-  actions: {
-    async checkAuth() {
-      this.isLoading = false
-    },
+    
+    const { data: user, error: searchError } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('telegram_id', tgUser.id)
+      .maybeSingle()
 
-    async login(initData) {
-      try {
-        const tg = window.Telegram?.WebApp
-        if (!tg?.initDataUnsafe?.user) {
-          throw new Error('بيانات Telegram غير متوفرة')
-        }
+    if (searchError) {
+      console.error('خطأ في البحث:', searchError)
+      throw searchError
+    }
 
-        const tgUser = tg.initDataUnsafe.user
-        console.log('Telegram user:', tgUser.id)
+    // ✅ إذا وجدنا المستخدم
+    if (user) {
+      console.log('مستخدم موجود:', user.id)
+      
+      // تحديث آخر دخول
+      await supabaseAdmin
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id)
 
-        // البحث عن المستخدم
-        let user = null
+      this.user = user
+      this.isAuthenticated = true
+      return { success: true, user }
+    }
+
+    // ✅ إنشاء مستخدم جديد
+    console.log('إنشاء مستخدم جديد...')
+    
+    const { data: newUser, error: createError } = await supabaseAdmin
+      .from('users')
+      .insert({
+        telegram_id: tgUser.id,
+        username: tgUser.username,
+        first_name: tgUser.first_name,
+        last_name: tgUser.last_name,
+        photo_url: tgUser.photo_url,
+        language_code: tgUser.language_code || 'ar',
+        balance: 0,
+        total_earned: 0,
+        referral_count: 0,
+        tasks_completed: 0
+      })
+      .select()
+      .single()
+
+    if (createError) {
+      // إذا كان المستخدم قد أُنشأ للتو (سباق)
+      if (createError.code === '23505') {
+        console.log('المستخدم أُنشأ للتو، جاري البحث...')
         
-        const { data, error } = await supabase
+        const { data: existingUser } = await supabaseAdmin
           .from('users')
           .select('*')
           .eq('telegram_id', tgUser.id)
-          .maybeSingle()
-        
-        if (error && error.code !== 'PGRST116') {
-          throw error
-        }
-        
-        user = data
-
-        // إذا وجدنا المستخدم
-        if (user) {
-          console.log('مستخدم موجود:', user.id)
-          
-          await supabaseAdmin
-            .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', user.id)
-
-          this.user = user
-          this.isAuthenticated = true
-          return { success: true, user }
-        }
-
-        // إنشاء مستخدم جديد
-        console.log('إنشاء مستخدم جديد...')
-        
-        const { data: newUser, error: createError } = await supabaseAdmin
-          .from('users')
-          .insert({
-            telegram_id: tgUser.id,
-            username: tgUser.username,
-            first_name: tgUser.first_name,
-            last_name: tgUser.last_name,
-            photo_url: tgUser.photo_url,
-            language_code: tgUser.language_code || 'ar',
-            balance: 0,
-            total_earned: 0,
-            referral_count: 0,
-            tasks_completed: 0
-          })
-          .select()
           .single()
-
-        if (createError) {
-          // إذا كان المستخدم موجوداً بالفعل
-          if (createError.message?.includes('duplicate') || createError.code === '23505') {
-            console.log('المستخدم موجود، جاري البحث...')
-            
-            const { data: existingUser } = await supabase
-              .from('users')
-              .select('*')
-              .eq('telegram_id', tgUser.id)
-              .maybeSingle()
-            
-            if (existingUser) {
-              this.user = existingUser
-              this.isAuthenticated = true
-              return { success: true, user: existingUser }
-            }
-          }
-          
-          throw createError
+        
+        if (existingUser) {
+          this.user = existingUser
+          this.isAuthenticated = true
+          return { success: true, user: existingUser }
         }
-
-        this.user = newUser
-        this.isAuthenticated = true
-        return { success: true, user: newUser }
-
-      } catch (error) {
-        console.error('خطأ في تسجيل الدخول:', error)
-        return { success: false, error: error.message }
       }
-    },
-
-    logout() {
-      this.user = null
-      this.isAuthenticated = false
-    },
-
-    async updateBalance(amount) {
-      if (!this.user) return
-
-      const newBalance = (this.user.balance || 0) + amount
       
-      const { error } = await supabase
-        .from('users')
-        .update({ balance: newBalance })
-        .eq('id', this.user.id)
-
-      if (error) {
-        console.error('خطأ في تحديث الرصيد:', error)
-        return
-      }
-
-      this.user.balance = newBalance
-    },
-
-    async fetchUserData() {
-      if (!this.user) return
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', this.user.id)
-        .single()
-
-      if (error) {
-        console.error('خطأ في جلب البيانات:', error)
-        return
-      }
-
-      this.user = data
+      throw createError
     }
+
+    console.log('مستخدم جديد:', newUser.id)
+    this.user = newUser
+    this.isAuthenticated = true
+    return { success: true, user: newUser }
+
+  } catch (error) {
+    console.error('خطأ في تسجيل الدخول:', error)
+    return { success: false, error: error.message }
   }
-})
+}
