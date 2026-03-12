@@ -1,16 +1,15 @@
-
 <template>
   <div class="p-4 pb-20">
     <!-- الإحصائيات -->
     <div class="grid grid-cols-2 gap-3 mb-4">
       <div class="bg-gray-900 rounded-xl p-4 text-center">
         <UsersIcon size="24" class="mx-auto mb-2 text-blue-400" />
-        <p class="text-2xl font-bold text-white">{{ stats.referralCount }}</p>
+        <p class="text-2xl font-bold text-white">{{ user?.referral_count || 0 }}</p>
         <p class="text-xs text-gray-400">عدد الإحالات</p>
       </div>
       <div class="bg-gray-900 rounded-xl p-4 text-center">
         <GiftIcon size="24" class="mx-auto mb-2 text-green-400" />
-        <p class="text-2xl font-bold text-white">{{ formatBalance(stats.referralEarnings) }}</p>
+        <p class="text-2xl font-bold text-white">{{ formatBalance(user?.referral_earnings) }}</p>
         <p class="text-xs text-gray-400">أرباح الإحالات</p>
       </div>
     </div>
@@ -19,26 +18,26 @@
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 mb-4">
       <p class="text-blue-200 text-sm mb-3">كود الإحالة الخاص بك</p>
       
-      <div v-if="stats.referralCode" class="bg-black/30 rounded-lg p-3 mb-3">
-        <code class="text-xl font-bold text-white tracking-wider">{{ stats.referralCode }}</code>
+      <div v-if="user?.referral_code" class="bg-black/30 rounded-lg p-3 mb-3">
+        <code class="text-xl font-bold text-white tracking-wider">{{ user.referral_code }}</code>
       </div>
       
       <div v-else class="bg-black/30 rounded-lg p-3 mb-3">
-        <p class="text-gray-400 text-sm">جاري توليد الكود...</p>
+        <p class="text-gray-400 text-sm">لا يوجد كود إحالة</p>
       </div>
 
       <div class="flex gap-2">
         <button
           @click="copyReferral"
-          :disabled="!stats.referralCode"
-          class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!user?.referral_code"
+          class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150 disabled:opacity-50"
         >
           <CopyIcon size="16" /> نسخ الرابط
         </button>
         <button
           @click="shareReferral"
-          :disabled="!stats.referralCode"
-          class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!user?.referral_code"
+          class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 transition-all duration-150 disabled:opacity-50"
         >
           <ShareIcon size="16" /> مشاركة
         </button>
@@ -104,9 +103,8 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { supabase } from '../config/supabase'
-import { supabaseAdmin } from '../config/supabaseAdmin'
 import { Users as UsersIcon, Gift as GiftIcon, Copy as CopyIcon, Share2 as ShareIcon } from 'lucide-vue-next'
 
 export default {
@@ -125,70 +123,28 @@ export default {
   },
   setup(props) {
     const referrals = ref([])
-    const stats = ref({
-      referralCount: 0,
-      referralEarnings: 0,
-      referralCode: ''
+
+    onMounted(() => {
+      if (props.user?.id) {
+        fetchReferrals()
+      }
     })
 
-    // مراقبة تغيرات user
-    watch(() => props.user, async (newUser) => {
-      if (newUser?.id) {
-        await fetchReferralData()
-      }
-    }, { immediate: true })
+    const fetchReferrals = async () => {
+      const { data } = await supabase
+        .from('referrals')
+        .select(`
+          *,
+          referred:referred_id (
+            first_name,
+            username,
+            created_at
+          )
+        `)
+        .eq('referrer_id', props.user.id)
+        .order('created_at', { ascending: false })
 
-    const fetchReferralData = async () => {
-      if (!props.user?.id) return
-      
-      try {
-        // استخدام البيانات من props أولاً
-        const userData = props.user
-        
-        stats.value = {
-          referralCount: userData.referral_count || 0,
-          referralEarnings: userData.referral_earnings || 0,
-          referralCode: userData.referral_code || ''
-        }
-
-        // إذا لم يكن هناك كود إحالة، نولده باستخدام supabaseAdmin
-        if (!stats.value.referralCode) {
-          await generateReferralCode(userData.id)
-        }
-
-        // جلب قائمة الإحالات
-        const { data: refs } = await supabase
-          .from('referrals')
-          .select(`
-            *,
-            referred:referred_id (
-              first_name,
-              username,
-              created_at
-            )
-          `)
-          .eq('referrer_id', userData.id)
-          .order('created_at', { ascending: false })
-
-        referrals.value = refs || []
-      } catch (error) {
-        console.error('خطأ في جلب الإحالات:', error)
-      }
-    }
-
-    const generateReferralCode = async (userId) => {
-      const code = 'SYT' + Math.random().toString(36).substring(2, 8).toUpperCase()
-      
-      const { data, error } = await supabaseAdmin
-        .from('users')
-        .update({ referral_code: code })
-        .eq('id', userId)
-        .select('referral_code')
-        .single()
-
-      if (!error && data) {
-        stats.value.referralCode = data.referral_code
-      }
+      referrals.value = data || []
     }
 
     const formatBalance = (val) => {
@@ -200,7 +156,7 @@ export default {
     }
 
     const copyReferral = () => {
-      const code = stats.value.referralCode
+      const code = props.user?.referral_code
       if (!code) return
       
       const link = `https://t.me/syt_wallet_bot?start=${code}`
@@ -208,7 +164,7 @@ export default {
     }
 
     const shareReferral = () => {
-      const code = stats.value.referralCode
+      const code = props.user?.referral_code
       if (!code) return
       
       const link = `https://t.me/syt_wallet_bot?start=${code}`
@@ -225,7 +181,6 @@ export default {
 
     return {
       referrals,
-      stats,
       formatBalance,
       formatDate,
       copyReferral,
