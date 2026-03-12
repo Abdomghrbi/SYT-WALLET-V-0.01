@@ -19,7 +19,7 @@
           @click="devLogin"
           class="bg-blue-500 text-white px-6 py-2 rounded-lg w-full active:scale-95 transition-transform"
         >
-          تسجيل دخول وهمي
+          تسجيل دخول كزائر
         </button>
       </div>
       
@@ -83,10 +83,10 @@ export default {
       store.user = {
         id: 'dev-user-123',
         telegram_id: 123456789,
-        first_name: 'مطور',
+        first_name: 'زائر',
         username: 'developer',
         balance: 1000,
-        referral_code: 'SYT123',
+        referral_code: 'SYT12345',
         referral_count: 5,
         total_earned: 500,
         wallet_address: '0x1234567890abcdef1234567890abcdef12345678'
