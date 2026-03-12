@@ -3,14 +3,12 @@ import { defineStore } from 'pinia'
 import { supabase } from '../config/supabase'
 import { supabaseAdmin } from '../config/supabaseAdmin'
 
-// توليد عنوان محفظة تلقائي من telegramId
 const generateWalletAddress = (telegramId) => {
   const prefix = '0x'
   const hash = telegramId.toString(16).padStart(40, '0')
   return prefix + hash
 }
 
-// توليد كود إحالة تلقائي
 const generateReferralCode = () => {
   return 'SYT' + Math.random().toString(36).substring(2, 8).toUpperCase()
 }
@@ -27,7 +25,7 @@ export const useStore = defineStore('main', {
       this.isLoading = false
     },
 
-    async login(initData) {
+    async login() {
       try {
         const tg = window.Telegram?.WebApp
         if (!tg?.initDataUnsafe?.user) {
@@ -37,23 +35,31 @@ export const useStore = defineStore('main', {
         const tgUser = tg.initDataUnsafe.user
         console.log('Telegram user ID:', tgUser.id)
 
-        // البحث باستخدام supabaseAdmin
         const { data: user, error: searchError } = await supabaseAdmin
           .from('users')
           .select('*')
           .eq('telegram_id', tgUser.id)
           .maybeSingle()
 
-        if (searchError) {
-          console.error('خطأ في البحث:', searchError)
-          throw searchError
-        }
+        if (searchError) throw searchError
 
-        // إذا وجدنا المستخدم
         if (user) {
           console.log('مستخدم موجود:', user.id)
           
-          // تحديث آخر دخول
+          const updates = {}
+          if (!user.wallet_address) updates.wallet_address = generateWalletAddress(user.telegram_id)
+          if (!user.referral_code) updates.referral_code = generateReferralCode()
+          
+          if (Object.keys(updates).length > 0) {
+            const { data: updatedUser } = await supabaseAdmin
+              .from('users')
+              .update(updates)
+              .eq('id', user.id)
+              .select()
+              .single()
+            if (updatedUser) Object.assign(user, updatedUser)
+          }
+          
           await supabaseAdmin
             .from('users')
             .update({ last_login: new Date().toISOString() })
@@ -64,9 +70,6 @@ export const useStore = defineStore('main', {
           return { success: true, user }
         }
 
-        // إنشاء مستخدم جديد
-        console.log('إنشاء مستخدم جديد...')
-        
         const { data: newUser, error: createError } = await supabaseAdmin
           .from('users')
           .insert({
@@ -88,8 +91,6 @@ export const useStore = defineStore('main', {
 
         if (createError) {
           if (createError.code === '23505') {
-            console.log('المستخدم أُنشأ للتو، جاري البحث...')
-            
             const { data: existingUser } = await supabaseAdmin
               .from('users')
               .select('*')
@@ -97,16 +98,28 @@ export const useStore = defineStore('main', {
               .single()
             
             if (existingUser) {
+              const updates = {}
+              if (!existingUser.wallet_address) updates.wallet_address = generateWalletAddress(existingUser.telegram_id)
+              if (!existingUser.referral_code) updates.referral_code = generateReferralCode()
+              
+              if (Object.keys(updates).length > 0) {
+                const { data: updatedUser } = await supabaseAdmin
+                  .from('users')
+                  .update(updates)
+                  .eq('id', existingUser.id)
+                  .select()
+                  .single()
+                if (updatedUser) Object.assign(existingUser, updatedUser)
+              }
+              
               this.user = existingUser
               this.isAuthenticated = true
               return { success: true, user: existingUser }
             }
           }
-          
           throw createError
         }
 
-        console.log('مستخدم جديد:', newUser.id)
         this.user = newUser
         this.isAuthenticated = true
         return { success: true, user: newUser }
@@ -124,7 +137,6 @@ export const useStore = defineStore('main', {
 
     async updateBalance(amount) {
       if (!this.user) return
-
       const newBalance = (this.user.balance || 0) + amount
       
       const { error } = await supabase
@@ -136,13 +148,11 @@ export const useStore = defineStore('main', {
         console.error('خطأ في تحديث الرصيد:', error)
         return
       }
-
       this.user.balance = newBalance
     },
 
     async fetchUserData() {
       if (!this.user) return
-
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -153,7 +163,6 @@ export const useStore = defineStore('main', {
         console.error('خطأ في جلب البيانات:', error)
         return
       }
-
       this.user = data
     }
   }
