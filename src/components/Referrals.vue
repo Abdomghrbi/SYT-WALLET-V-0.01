@@ -159,7 +159,7 @@ export default {
       const code = props.user?.referral_code
       if (!code) return
       
-      const link = `https://t.me/syt_wallet_bot?start=${code}`
+      const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
       navigator.clipboard.writeText(link)
     }
 
@@ -167,7 +167,7 @@ export default {
       const code = props.user?.referral_code
       if (!code) return
       
-      const link = `https://t.me/syt_wallet_bot?start=${code}`
+      const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
       const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀\n\n${link}`
       
       if (window.Telegram?.WebApp) {
