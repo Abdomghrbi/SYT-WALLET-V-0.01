@@ -98,13 +98,7 @@ export default {
   setup() {
     const formatBalance = (balance) => {
       return balance ? parseFloat(balance).toFixed(4) : '0.0000'
-    // في setup()
-onMounted(async () => {
-  console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL)
-  
-  const { data, error } = await supabase.from('users').select('*').limit(1)
-  console.log('Test query:', { data, error })
-})
+    
     }
 
     return {
