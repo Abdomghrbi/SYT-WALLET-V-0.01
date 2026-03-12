@@ -25,11 +25,11 @@
 
       <div class="flex gap-2">
         <button
-          @click="copyReferral"
-          class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2"
-        >
-          <CopyIcon size="16" /> نسخ الرابط
-        </button>
+  @click="copyReferral"
+  class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150"
+>
+  <CopyIcon size="16" /> نسخ الرابط
+</button>
         <button
           @click="shareReferral"
           class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2"
@@ -156,7 +156,7 @@ export default {
     const formatDate = (date) => new Date(date).toLocaleDateString('ar-SA')
 
     const copyReferral = () => {
-      const link = `https://t.me/SYT_Wallet_Test_bot?start=${stats.value.referralCode}`
+      const link = `https://t.me/syt_wallet_bot?start=${stats.value.referralCode}`
       navigator.clipboard.writeText(link)
     }
 
