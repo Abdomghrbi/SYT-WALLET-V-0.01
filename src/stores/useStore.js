@@ -1,6 +1,7 @@
 
 import { defineStore } from 'pinia'
 import { supabase } from '../config/supabase'
+import { supabaseAdmin } from '../config/supabaseAdmin'
 
 export const useStore = defineStore('main', {
   state: () => ({
@@ -10,31 +11,25 @@ export const useStore = defineStore('main', {
   }),
 
   actions: {
-    async checkAuth() {
-      this.isLoading = false
-    },
-
     async login(initData) {
       try {
-        // التحقق من Telegram WebApp
         const tg = window.Telegram?.WebApp
-        
         if (!tg?.initDataUnsafe?.user) {
           throw new Error('بيانات Telegram غير متوفرة')
         }
 
         const tgUser = tg.initDataUnsafe.user
 
-        // البحث عن المستخدم في Supabase
+        // البحث عن المستخدم
         let { data: user, error } = await supabase
           .from('users')
           .select('*')
           .eq('telegram_id', tgUser.id)
           .single()
 
+        // إنشاء مستخدم جديد باستخدام Service Role
         if (error && error.code === 'PGRST116') {
-          // المستخدم غير موجود - إنشاء جديد
-          const { data: newUser, error: createError } = await supabase
+          const { data: newUser, error: createError } = await supabaseAdmin
             .from('users')
             .insert({
               telegram_id: tgUser.id,
@@ -58,7 +53,7 @@ export const useStore = defineStore('main', {
         }
 
         // تحديث آخر دخول
-        await supabase
+        await supabaseAdmin
           .from('users')
           .update({ last_login: new Date().toISOString() })
           .eq('id', user.id)
@@ -69,7 +64,7 @@ export const useStore = defineStore('main', {
         return { success: true, user }
 
       } catch (error) {
-        console.error('خطأ في تسجيل الدخول:', error)
+        console.error('خطأ:', error)
         return { success: false, error: error.message }
       }
     },
@@ -77,41 +72,6 @@ export const useStore = defineStore('main', {
     logout() {
       this.user = null
       this.isAuthenticated = false
-    },
-
-    async updateBalance(amount) {
-      if (!this.user) return
-
-      const newBalance = (this.user.balance || 0) + amount
-      
-      const { error } = await supabase
-        .from('users')
-        .update({ balance: newBalance })
-        .eq('id', this.user.id)
-
-      if (error) {
-        console.error('خطأ في تحديث الرصيد:', error)
-        return
-      }
-
-      this.user.balance = newBalance
-    },
-
-    async fetchUserData() {
-      if (!this.user) return
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', this.user.id)
-        .single()
-
-      if (error) {
-        console.error('خطأ في جلب البيانات:', error)
-        return
-      }
-
-      this.user = data
     }
   }
 })
