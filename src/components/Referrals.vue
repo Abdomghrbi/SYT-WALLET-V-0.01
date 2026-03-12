@@ -30,13 +30,15 @@
       <div class="flex gap-2">
         <button
           @click="copyReferral"
-          class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150"
+          :disabled="!stats.referralCode"
+          class="flex-1 bg-white/20 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 active:bg-white/30 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CopyIcon size="16" /> نسخ الرابط
         </button>
         <button
           @click="shareReferral"
-          class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 transition-all duration-150"
+          :disabled="!stats.referralCode"
+          class="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm flex items-center justify-center gap-2 active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ShareIcon size="16" /> مشاركة
         </button>
@@ -102,8 +104,9 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { supabase } from '../config/supabase'
+import { supabaseAdmin } from '../config/supabaseAdmin'
 import { Users as UsersIcon, Gift as GiftIcon, Copy as CopyIcon, Share2 as ShareIcon } from 'lucide-vue-next'
 
 export default {
@@ -129,9 +132,9 @@ export default {
     })
 
     // مراقبة تغيرات user
-    watch(() => props.user, (newUser) => {
+    watch(() => props.user, async (newUser) => {
       if (newUser?.id) {
-        fetchReferralData()
+        await fetchReferralData()
       }
     }, { immediate: true })
 
@@ -139,7 +142,7 @@ export default {
       if (!props.user?.id) return
       
       try {
-        // جلب بيانات المستخدم مباشرة من props.user أو من Supabase
+        // استخدام البيانات من props أولاً
         const userData = props.user
         
         stats.value = {
@@ -148,8 +151,8 @@ export default {
           referralCode: userData.referral_code || ''
         }
 
-        // إذا لم يكن هناك كود إحالة، نولده
-        if (!stats.value.referralCode && userData.id) {
+        // إذا لم يكن هناك كود إحالة، نولده باستخدام supabaseAdmin
+        if (!stats.value.referralCode) {
           await generateReferralCode(userData.id)
         }
 
@@ -176,7 +179,7 @@ export default {
     const generateReferralCode = async (userId) => {
       const code = 'SYT' + Math.random().toString(36).substring(2, 8).toUpperCase()
       
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('users')
         .update({ referral_code: code })
         .eq('id', userId)
@@ -202,14 +205,13 @@ export default {
       
       const link = `https://t.me/syt_wallet_bot?start=${code}`
       navigator.clipboard.writeText(link)
-      alert('تم نسخ الرابط!')
     }
 
     const shareReferral = () => {
       const code = stats.value.referralCode
       if (!code) return
       
-      const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
+      const link = `https://t.me/syt_wallet_bot?start=${code}`
       const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀\n\n${link}`
       
       if (window.Telegram?.WebApp) {
@@ -218,7 +220,6 @@ export default {
         )
       } else {
         navigator.clipboard.writeText(text)
-        alert('تم نسخ الرابط!')
       }
     }
 
@@ -233,4 +234,3 @@ export default {
   }
 }
 </script>
-
