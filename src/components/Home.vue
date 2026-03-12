@@ -1,106 +1,191 @@
-
 <template>
   <div class="p-4 pb-20">
-    <!-- ترحيب -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold mb-1">
-        أهلاً {{ user?.first_name || 'بك' }}! 
-      </h1>
-    
-    </div>
 
-    <!-- رصيد سريع -->
-    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <p class="text-blue-200 text-sm mb-1">الرصيد</p>
-          <h2 class="text-3xl font-bold text-white">
-            {{ formatBalance(user?.balance) }} <span class="text-lg">SYT</span>
-          </h2>
-        </div>
-        <div class="bg-white/20 p-3 rounded-xl">
-          <WalletIcon size="32" class="text-white" />
-        </div>
-      </div>
-      
+    <h2 class="text-xl font-bold mb-4">المكافأة اليومية</h2>
+
+    <div class="bg-gray-900 rounded-xl p-4">
+
       <div class="flex items-center justify-between">
-        <button 
-          @click="$emit('change-tab', 'wallet')"
-          class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1"
-        >
-          المحفظة <ArrowRightIcon size="16" />
-        </button>
+
+        <div class="flex items-center gap-3">
+
+          <div class="bg-blue-500/20 p-2 rounded-lg">
+            <GiftIcon size="20" class="text-blue-400"/>
+          </div>
+
+          <div>
+            <h3 class="font-semibold">مكافأة تسجيل الدخول</h3>
+            <p class="text-sm text-gray-400">
+              احصل على 25 عملة كل 24 ساعة
+            </p>
+          </div>
+
+        </div>
+
+        <span class="text-green-400 font-bold">+25</span>
+
       </div>
+
+      <div class="mt-4 flex justify-between items-center">
+
+        <span class="text-sm text-gray-400">
+          {{ statusText }}
+        </span>
+
+        <button
+          @click="claimReward"
+          :disabled="!canClaim || loading"
+          class="px-4 py-2 rounded-lg text-sm"
+          :class="canClaim ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-400'"
+        >
+          {{ loading ? '...' : 'استلام المكافأة' }}
+        </button>
+
+      </div>
+
     </div>
 
-    <!-- إحصائيات سريعة -->
-    <div class="grid grid-cols-2 gap-3 mb-4">
-      <div class="bg-gray-900 rounded-xl p-4">
-        <div class="flex items-center gap-2 mb-2">
-          <AwardIcon size="20" class="text-yellow-400" />
-          <span class="text-gray-400 text-sm">المهام</span>
-        </div>
-        <p class="text-2xl font-bold text-white">{{ user?.tasks_completed || 0 }}</p>
-        <p class="text-xs text-gray-500">مهمة مكتملة</p>
-      </div>
-      
-      <div class="bg-gray-900 rounded-xl p-4">
-        <div class="flex items-center gap-2 mb-2">
-          <TrendingUpIcon size="20" class="text-green-400" />
-          <span class="text-gray-400 text-sm">الإحالات</span>
-        </div>
-        <p class="text-2xl font-bold text-white">{{ user?.referral_count || 0 }}</p>
-        <p class="text-xs text-gray-500">صديق دعوته</p>
-      </div>
-    </div>
-
-    <!-- دعوة صديق -->
-    <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h4 class="font-bold text-white mb-1">ادعُ أصدقاءك!</h4>
-          <p class="text-green-200 text-sm">
-            احصل على 10% من أرباحهم
-          </p>
-        </div>
-        <button 
-          @click="$emit('change-tab', 'referrals')"
-          class="bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-medium"
-        >
-          دعوة
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
-import { Wallet as WalletIcon, ArrowRight as ArrowRightIcon, Award as AwardIcon, TrendingUp as TrendingUpIcon } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { supabase } from '../config/supabase'
+import { Gift as GiftIcon } from 'lucide-vue-next'
 
 export default {
-  name: 'Home',
-  components: {
-    WalletIcon,
-    ArrowRightIcon,
-    AwardIcon,
-    TrendingUpIcon
+
+  name:'Tasks',
+
+  components:{
+    GiftIcon
   },
-  props: {
-    user: {
-      type: Object,
-      required: true
+
+  props:{
+    user:{
+      type:Object,
+      required:true
     }
   },
-  emits: ['change-tab'],
-  setup() {
-    const formatBalance = (balance) => {
-      return balance ? parseFloat(balance).toFixed(4) : '0.0000'
-    
+
+  setup(props){
+
+    const canClaim = ref(false)
+    const statusText = ref("جارٍ التحقق...")
+    const loading = ref(false)
+
+    const DAILY_TASK_ID = "11111111-1111-1111-1111-111111111111"
+
+    const checkDailyReward = async ()=>{
+
+      const { data } = await supabase
+      .from('user_tasks')
+      .select('claimed_at')
+      .eq('user_id', props.user.id)
+      .eq('task_id', DAILY_TASK_ID)
+      .order('claimed_at',{ ascending:false })
+      .limit(1)
+
+      if(!data || data.length === 0){
+
+        canClaim.value = true
+        statusText.value = "متاحة الآن"
+        return
+
+      }
+
+      const lastClaim = new Date(data[0].claimed_at)
+      const now = new Date()
+
+      const diffHours = (now - lastClaim) / (1000*60*60)
+
+      if(diffHours >= 24){
+
+        canClaim.value = true
+        statusText.value = "متاحة الآن"
+
+      }else{
+
+        const remaining = Math.ceil(24 - diffHours)
+
+        canClaim.value = false
+        statusText.value = `متاحة بعد ${remaining} ساعة`
+
+      }
+
     }
 
-    return {
-      formatBalance
+
+    const claimReward = async ()=>{
+
+      if(!canClaim.value) return
+
+      loading.value = true
+
+      const reward = 25
+
+      try{
+
+        await supabase
+        .from('user_tasks')
+        .insert({
+          user_id: props.user.id,
+          task_id: DAILY_TASK_ID,
+          status:'completed',
+          completed_at:new Date().toISOString(),
+          claimed_at:new Date().toISOString(),
+          reward_claimed:reward
+        })
+
+
+        const { data:userData } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('id',props.user.id)
+        .single()
+
+        const newBalance = (userData.balance || 0) + reward
+
+
+        await supabase
+        .from('users')
+        .update({ balance:newBalance })
+        .eq('id',props.user.id)
+
+
+        /* تحديث الرصيد في الواجهة فوراً */
+
+        props.user.balance = newBalance
+
+
+        checkDailyReward()
+
+      }catch(e){
+
+        console.error(e)
+
+      }
+
+      loading.value = false
+
     }
+
+
+    onMounted(()=>{
+
+      checkDailyReward()
+
+    })
+
+
+    return{
+      canClaim,
+      statusText,
+      loading,
+      claimReward
+    }
+
   }
+
 }
 </script>
