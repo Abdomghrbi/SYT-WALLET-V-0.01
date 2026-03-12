@@ -164,19 +164,22 @@ export default {
     }
 
     const shareReferral = () => {
-      const code = props.user?.referral_code
-      if (!code) return
-      
-      const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
-      const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀\n\n${link}`
-      
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.openTelegramLink(
-          `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`
-        )
-      } else {
-        navigator.clipboard.writeText(text)
-      }
+  const code = props.user?.referral_code
+  if (!code) return
+  
+  const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
+  const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀`
+  
+  if (window.Telegram?.WebApp?.share) {
+    // ✅ الطريقة المباشرة
+    window.Telegram.WebApp.share({
+      url: link,
+      text: text
+    })
+  } else {
+    // fallback
+    navigator.clipboard.writeText(`${text}\n\n${link}`)
+  }
     }
 
     return {
