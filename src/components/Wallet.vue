@@ -88,7 +88,12 @@ export default {
     const getTxLabel = (type) => ({ deposit: 'إيداع', withdraw: 'سحب', reward: 'مكافأة', referral_bonus: 'إحالة', task_bonus: 'مهمة' }[type] || type)
     const formatTxAmount = (amount, type) => `${['deposit', 'reward', 'referral_bonus', 'task_bonus'].includes(type) ? '+' : '-'}${amount}`
 
-    return { balance, walletAddress, transactions, formatBalance, formatUsd, formatDate, copyAddress, getTxIcon, getTxColor, getTxLabel, formatTxAmount }
+   // return { balance, walletAddress, transactions, formatBalance, formatUsd, formatDate, copyAddress, getTxIcon, getTxColor, getTxLabel, formatTxAmount }
+ setup() {
+    const formatBalance = (balance) => {
+      return balance ? parseFloat(balance).toFixed(4) : '0.0000'
+    
+    }
   }
 }
 </script>
