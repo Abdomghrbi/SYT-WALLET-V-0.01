@@ -44,27 +44,6 @@
       </div>
     </div>
 
-    <!-- شرح نظام الإحالة -->
-    <div class="bg-gray-900 rounded-xl p-4 mb-4">
-      <h3 class="font-semibold mb-3 flex items-center gap-2">
-        <GiftIcon size="18" class="text-yellow-400" />
-        كيف تعمل الإحالات؟
-      </h3>
-      <ul class="space-y-2 text-sm text-gray-400">
-        <li class="flex items-start gap-2">
-          <span class="text-blue-400">1.</span>
-          شارك كودك مع أصدقائك
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="text-blue-400">2.</span>
-          عند تسجيلهم يحصلون على 100 SYT مكافأة
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="text-blue-400">3.</span>
-          تحصل أنت على 10% من أرباحهم
-        </li>
-      </ul>
-    </div>
 
     <!-- قائمة الإحالات -->
     <div class="bg-gray-900 rounded-xl p-4">
@@ -72,8 +51,8 @@
       
       <div v-if="referrals.length === 0" class="text-center py-8 text-gray-500">
         <UsersIcon size="48" class="mx-auto mb-3 opacity-30" />
-        <p>لم تقم بأي إحالات بعد</p>
-        <p class="text-sm mt-1">ابدأ بدعوة أصدقائك!</p>
+        <p>لا يوجد</p>
+        <p class="text-sm mt-1">ابدأ بدعوة أصدقائك</p>
       </div>
 
       <div v-else class="space-y-3">
