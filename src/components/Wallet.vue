@@ -5,7 +5,7 @@
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
       <p class="text-blue-200 text-sm mb-1">الرصيد المتاح</p>
       <h2 class="text-4xl font-bold text-white mb-2">
-        {{ formatBalance(balance) }} <span class="text-xl">SYT</span>
+        {{ formatBalance(user?.total_earned) }} <span class="text-xl">SYT</span>
       </h2>
       <p class="text-blue-200 text-sm">≈ ${{ formatUsd(balance) }} USD</p>
     </div>
