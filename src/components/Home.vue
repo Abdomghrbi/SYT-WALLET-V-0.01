@@ -4,9 +4,9 @@
     <!-- ترحيب -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold mb-1">
-        أهلاً {{ user?.first_name || 'بك' }}! 👋
+        أهلاً {{ user?.first_name || 'بك' }}! 
       </h1>
-      <p class="text-gray-400">لنكسب بعض SYT اليوم</p>
+    
     </div>
 
     <!-- رصيد سريع -->
