@@ -1,4 +1,4 @@
-
+// src/stores/useStore.js
 import { defineStore } from 'pinia'
 import { supabase } from '../config/supabase'
 
@@ -11,15 +11,8 @@ export const useStore = defineStore('main', {
 
   actions: {
     async checkAuth() {
-      const stored = localStorage.getItem('syt-wallet-user')
-      if (stored) {
-        try {
-          this.user = JSON.parse(stored)
-          this.isAuthenticated = true
-        } catch (e) {
-          console.error('خطأ في قراءة التخزين:', e)
-        }
-      }
+      // لا نتحقق من localStorage
+      // ننتظر تسجيل الدخول عبر Telegram فقط
       this.isLoading = false
     },
 
@@ -39,7 +32,7 @@ export const useStore = defineStore('main', {
         if (data.success) {
           this.user = data.user
           this.isAuthenticated = true
-          localStorage.setItem('syt-wallet-user', JSON.stringify(data.user))
+          // ❌ لا نحفظ في localStorage
           return { success: true }
         } else {
           throw new Error(data.message)
@@ -52,14 +45,14 @@ export const useStore = defineStore('main', {
     logout() {
       this.user = null
       this.isAuthenticated = false
-      localStorage.removeItem('syt-wallet-user')
+      // ❌ لا نحذف من localStorage (لأنه غير موجود)
       supabase.auth.signOut()
     },
 
     updateBalance(amount) {
       if (this.user) {
         this.user.balance += amount
-        localStorage.setItem('syt-wallet-user', JSON.stringify(this.user))
+        // ❌ لا نحفظ التحديث في localStorage
       }
     }
   }
