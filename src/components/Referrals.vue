@@ -168,17 +168,17 @@ export default {
   if (!code) return
   
   const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
-  const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀`
   
-  if (window.Telegram?.WebApp?.share) {
-    // ✅ الطريقة المباشرة
-    window.Telegram.WebApp.share({
-      url: link,
-      text: text
-    })
+  // ✅ النص فقط (يحتوي على الرابط بداخله)
+  const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀\n\n${link}`
+  
+  if (window.Telegram?.WebApp) {
+    // ✅ لا نضيف &text، فقط الرابط مع النص بداخله
+    window.Telegram.WebApp.openTelegramLink(
+      `https://t.me/share/url?url=${encodeURIComponent(link)}`
+    )
   } else {
-    // fallback
-    navigator.clipboard.writeText(`${text}\n\n${link}`)
+    navigator.clipboard.writeText(text)
   }
     }
 
