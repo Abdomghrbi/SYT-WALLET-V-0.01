@@ -5,25 +5,13 @@
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
       <p class="text-blue-200 text-sm mb-1">الرصيد المتاح</p>
       <h2 class="text-4xl font-bold text-white mb-2">
-        {{ formatBalance(user?.total_earned) }} <span class="text-xl">SYT</span>
+        {{ formatBalance(balance) }} <span class="text-xl">SYT</span>
       </h2>
       <p class="text-blue-200 text-sm">≈ ${{ formatUsd(balance) }} USD</p>
     </div>
 
     <!-- عنوان المحفظة -->
-    <div class="bg-gray-900 rounded-xl p-4 mb-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-gray-400 text-sm">عنوان المحفظة</span>
-        <button v-if="walletAddress" @click="copyAddress" class="text-blue-400 text-sm flex items-center gap-1">
-          <CopyIcon size="14" /> نسخ
-        </button>
-      </div>
-      
-      <div v-if="walletAddress" class="bg-black/30 rounded-lg p-3">
-        <code class="text-sm text-white break-all">{{ walletAddress }}</code>
-      </div>
     
-    </div>
 
     <!-- أزرار سريعة -->
     <div class="grid grid-cols-2 gap-3 mb-4">
