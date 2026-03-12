@@ -156,7 +156,7 @@ export default {
     const formatDate = (date) => new Date(date).toLocaleDateString('ar-SA')
 
     const copyReferral = () => {
-      const link = `https://t.me/syt_wallet_bot?start=${stats.value.referralCode}`
+      const link = `https://t.me/SYT_Wallet_Test_bot?start=${stats.value.referralCode}`
       navigator.clipboard.writeText(link)
     }
 
