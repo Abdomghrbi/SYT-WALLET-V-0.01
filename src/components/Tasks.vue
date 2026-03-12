@@ -1,8 +1,7 @@
 <template>
   <div class="p-4 pb-20">
 
-    <!-- عنوان الصفحة -->
-    <h2 class="text-xl font-bold mb-4">المكافآت اليومية</h2>
+    <h2 class="text-xl font-bold mb-4">المكافأة اليومية</h2>
 
     <div class="bg-gray-900 rounded-xl p-4">
 
@@ -16,7 +15,7 @@
           <div>
             <h3 class="font-semibold">مكافأة تسجيل الدخول</h3>
             <p class="text-sm text-gray-400">
-              احصل على 25 عملة مرة كل 24 ساعة
+              احصل على 25 عملة كل 24 ساعة
             </p>
           </div>
         </div>
@@ -33,7 +32,7 @@
 
         <button
           :disabled="!canClaim"
-          @click="claimDailyReward"
+          @click="claimReward"
           class="px-4 py-2 rounded-lg text-sm"
           :class="canClaim ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-400'"
         >
@@ -48,21 +47,15 @@
 </template>
 
 <script>
-
-/* استيراد أدوات Vue */
 import { ref, onMounted } from 'vue'
-
-/* استيراد اتصال Supabase */
 import { supabase } from '../config/supabase'
-
-/* استيراد الأيقونة */
 import { Gift as GiftIcon } from 'lucide-vue-next'
 
 export default {
 
-  name: 'DailyReward',
+  name: 'Tasks',
 
-  components: {
+  components:{
     GiftIcon
   },
 
@@ -78,44 +71,39 @@ export default {
     const canClaim = ref(false)
     const statusText = ref("جارٍ التحقق...")
 
-    let lastClaimTime = null
+    const DAILY_TASK_ID = "daily_reward"
 
-
-    /* فحص آخر مكافأة استلمها المستخدم */
     const checkDailyReward = async ()=>{
 
       const { data } = await supabase
       .from('user_tasks')
-      .select('*')
-      .eq('user_id',props.user.id)
-      .eq('task_type','daily_login')
-      .order('created_at',{ascending:false})
+      .select('claimed_at')
+      .eq('user_id', props.user.id)
+      .eq('task_id', DAILY_TASK_ID)
+      .order('claimed_at', { ascending:false })
       .limit(1)
 
       if(!data || data.length === 0){
 
         canClaim.value = true
         statusText.value = "متاحة الآن"
-
         return
+
       }
 
-      lastClaimTime = new Date(data[0].created_at)
-
+      const lastClaim = new Date(data[0].claimed_at)
       const now = new Date()
 
-      const diff = now - lastClaimTime
+      const diffHours = (now - lastClaim) / (1000*60*60)
 
-      const hours = diff / (1000*60*60)
-
-      if(hours >= 24){
+      if(diffHours >= 24){
 
         canClaim.value = true
         statusText.value = "متاحة الآن"
 
       }else{
 
-        const remaining = Math.ceil(24 - hours)
+        const remaining = Math.ceil(24 - diffHours)
 
         canClaim.value = false
         statusText.value = `متاحة بعد ${remaining} ساعة`
@@ -125,28 +113,42 @@ export default {
     }
 
 
-    /* استلام المكافأة اليومية */
-    const claimDailyReward = async ()=>{
+    const claimReward = async ()=>{
 
       if(!canClaim.value) return
 
+      const reward = 25
 
-      /* تسجيل العملية في قاعدة البيانات */
+      /* تسجيل المهمة */
+
       await supabase
       .from('user_tasks')
       .insert({
-        user_id:props.user.id,
-        task_type:'daily_login',
-        reward:25
+        user_id: props.user.id,
+        task_id: DAILY_TASK_ID,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        claimed_at: new Date().toISOString(),
+        reward_claimed: reward
       })
 
 
-      /* زيادة رصيد المستخدم */
-      await supabase.rpc('add_user_balance',{
-        p_user_id:props.user.id,
-        p_amount:25
-      })
+      /* جلب الرصيد الحالي */
 
+      const { data:userData } = await supabase
+      .from('users')
+      .select('balance')
+      .eq('id', props.user.id)
+      .single()
+
+      const newBalance = (userData.balance || 0) + reward
+
+      /* تحديث الرصيد */
+
+      await supabase
+      .from('users')
+      .update({ balance: newBalance })
+      .eq('id', props.user.id)
 
       checkDailyReward()
 
@@ -161,7 +163,7 @@ export default {
     return{
       canClaim,
       statusText,
-      claimDailyReward
+      claimReward
     }
 
   }
