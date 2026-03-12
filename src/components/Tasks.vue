@@ -74,8 +74,8 @@ export default {
     const statusText = ref("جارٍ التحقق...")
     const loading = ref(false)
 
-    const DAILY_TASK_ID = "11111111-1111-1111-1111-111111111111"
-
+    const DAILY_TASK_ID = "6c3c8c9c-3c0a-4c88-bc57-2d89c9c1c001"
+    
     const checkDailyReward = async ()=>{
 
       const { data } = await supabase
