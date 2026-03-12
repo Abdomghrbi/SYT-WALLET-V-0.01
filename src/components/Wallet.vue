@@ -22,11 +22,7 @@
       <div v-if="walletAddress" class="bg-black/30 rounded-lg p-3">
         <code class="text-sm text-white break-all">{{ walletAddress }}</code>
       </div>
-      
-      <div v-else class="text-center py-4">
-        <p class="text-gray-500 text-sm mb-3">لم يتم ربط محفظة بعد</p>
-        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">ربط محفظة</button>
-      </div>
+    
     </div>
 
     <!-- أزرار سريعة -->
