@@ -3,7 +3,7 @@
   <div class="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
     <!-- حالة التحميل -->
     <div v-if="loading" class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mx-auto mb-4"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-b-6 border-blue-500 mx-auto mb-4"></div>
       <p class="text-gray-200">جاري تسجيل الدخول...</p>
     </div>
 
