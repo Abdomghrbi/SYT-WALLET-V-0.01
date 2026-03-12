@@ -13,7 +13,7 @@
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
       <div class="flex items-center justify-between mb-4">
         <div>
-          <p class="text-blue-200 text-sm mb-1">رصيدك</p>
+          <p class="text-blue-200 text-sm mb-1">الرصيد</p>
           <h2 class="text-3xl font-bold text-white">
             {{ formatBalance(user?.balance) }} <span class="text-lg">SYT</span>
           </h2>
@@ -24,9 +24,6 @@
       </div>
       
       <div class="flex items-center justify-between">
-        <p class="text-blue-200 text-sm">
-          إجمالي الأرباح: {{ formatBalance(user?.total_earned) }} SYT
-        </p>
         <button 
           @click="$emit('change-tab', 'wallet')"
           class="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1"
