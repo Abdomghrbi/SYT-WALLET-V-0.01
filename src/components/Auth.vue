@@ -3,21 +3,21 @@
   <div class="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
     <!-- حالة التحميل -->
     <div v-if="loading" class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-700 mx-auto mb-4"></div>
-      <p class="text-gray-200">جاري تسجيل الدخول...</p>
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p class="text-gray-400">جاري تسجيل الدخول...</p>
     </div>
 
     <!-- حالة الخطأ -->
-    <div v-else-if="error" class="text-center">
+    <div v-else-if="error" class="text-center w-full max-w-sm">
       <div class="text-red-500 text-4xl mb-4">⚠️</div>
       <p class="text-red-400 mb-6">{{ error }}</p>
       
       <!-- وضع المطور -->
-      <div class="bg-gray-900 rounded-xl p-4 mb-4 max-w-sm w-full">
+      <div class="bg-gray-900 rounded-xl p-4 mb-4">
         <p class="text-gray-400 text-sm mb-2">وضع المطور:</p>
         <button 
           @click="devLogin"
-          class="bg-blue-500 text-white px-6 py-2 rounded-lg w-full"
+          class="bg-blue-500 text-white px-6 py-2 rounded-lg w-full active:scale-95 transition-transform"
         >
           تسجيل دخول وهمي
         </button>
@@ -25,7 +25,7 @@
       
       <button 
         @click="retry"
-        class="bg-gray-800 text-white px-6 py-2 rounded-lg"
+        class="bg-gray-800 text-white px-6 py-2 rounded-lg active:scale-95 transition-transform"
       >
         إعادة المحاولة
       </button>
@@ -44,38 +44,37 @@ export default {
     const loading = ref(true)
     const error = ref(null)
 
-    onMounted(async () => {
-      await authenticate()
+    onMounted(() => {
+      authenticate()
     })
 
     const authenticate = async () => {
       try {
-        // التحقق من Telegram
         const tg = window.Telegram?.WebApp
         
-        if (!tg?.initData) {
-          // وضع التطوير
-          if (import.meta.env.DEV) {
-            loading.value = false
-            return
-          }
-          throw new Error('يرجى فتح التطبيق من Telegram')
+        // ✅ التحقق من وجود Telegram
+        if (!tg?.initDataUnsafe?.user) {
+          loading.value = false
+          return
         }
 
-        // توسيع الشاشة
+        // ✅ توسيع الشاشة
         tg.expand()
         tg.ready()
 
-        // تسجيل الدخول
-        const result = await store.login(tg.initData)
+        // ✅ تسجيل الدخول (login تستخدم Telegram مباشرة من window)
+        const result = await store.login()
         
         if (!result.success) {
           throw new Error(result.error)
         }
 
+        // ✅ إخفاء التحميل عند النجاح (App.vue يتولى الباقي)
+        loading.value = false
+
       } catch (err) {
+        console.error('خطأ في Auth:', err)
         error.value = err.message
-      } finally {
         loading.value = false
       }
     }
@@ -89,10 +88,11 @@ export default {
         balance: 1000,
         referral_code: 'SYT123',
         referral_count: 5,
-        total_earned: 500
+        total_earned: 500,
+        wallet_address: '0x1234567890abcdef1234567890abcdef12345678'
       }
       store.isAuthenticated = true
-      localStorage.setItem('syt-wallet-user', JSON.stringify(store.user))
+      loading.value = false
     }
 
     const retry = () => {
