@@ -31,7 +31,7 @@
         <div class="mt-3 flex items-center justify-between">
           <div class="flex items-center gap-2 text-sm text-gray-500">
             <CheckCircleIcon v-if="isCompleted" size="16" class="text-green-400" />
-            <ClockIcon v-else-if="!canClaim" size="16" class="text-yellow-400" />
+            <ClockIcon v-else-if="isPending" size="16" class="text-yellow-400" />
             <span>{{ statusText }}</span>
           </div>
 
@@ -40,7 +40,7 @@
             @click="claimReward"
             class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"
           >
-            {{ loadingTask ? 'جارٍ التحميل...' : 'استلام المكافأة' }}
+            {{ loadingTask ? '...' : 'استلام المكافأة' }}
           </button>
         </div>
       </div>
@@ -56,16 +56,13 @@ import { Gift as GiftIcon, CheckCircle2 as CheckCircleIcon, Clock as ClockIcon }
 export default {
   name: 'Tasks',
   components: { GiftIcon, CheckCircleIcon, ClockIcon },
-  props: {
-    user: { type: Object, required: true }
-  },
+  props: { user: { type: Object, required: true } },
   setup(props) {
     const loading = ref(true)
     const loadingTask = ref(false)
     const lastClaimed = ref(null)
 
-    // UUID المهمة اليومية من جدول tasks
-    const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
+    const DAILY_TASK_ID = 1       // رقم المهمة اليومية في جدول tasks
     const REWARD_AMOUNT = 25
     const COOLDOWN_HOURS = 24
 
@@ -99,26 +96,22 @@ export default {
 
     const canClaim = ref(false)
     const isCompleted = ref(false)
+    const isPending = ref(true)
     const statusText = ref('جارٍ التحميل...')
 
     const updateStatus = () => {
       const hours = hoursSinceLastClaim()
-      if (hours >= COOLDOWN_HOURS) {
+      if (hours >= COOLDOWN_HOURS || hours === Infinity) {
         canClaim.value = true
         isCompleted.value = false
-        statusText.value = 'متاحة الآن'
-      } else if (hours === Infinity) {
-        canClaim.value = true
-        isCompleted.value = false
+        isPending.value = false
         statusText.value = 'متاحة الآن'
       } else {
         canClaim.value = false
         isCompleted.value = false
+        isPending.value = true
         const remaining = Math.ceil(COOLDOWN_HOURS - hours)
         statusText.value = `متاحة بعد ${remaining} ساعة`
-      }
-      if (hours !== Infinity && !canClaim.value) {
-        isCompleted.value = true
       }
     }
 
@@ -129,8 +122,8 @@ export default {
       try {
         const nowISO = new Date().toISOString()
 
-        // إدراج سجل في user_tasks
-        await supabase.from('user_tasks').insert({
+        // إدراج مهمة في user_tasks
+        const { error: insertError } = await supabase.from('user_tasks').insert({
           user_id: props.user.id,
           task_id: DAILY_TASK_ID,
           status: 'completed',
@@ -138,23 +131,27 @@ export default {
           claimed_at: nowISO,
           reward_claimed: REWARD_AMOUNT
         })
+        if (insertError) throw insertError
 
-        // جلب الرصيد الحالي
-        const { data: userData } = await supabase
+        // جلب الرصيد الحالي وتأكد من تحويله إلى رقم
+        const { data: userData, error: selectError } = await supabase
           .from('users')
           .select('balance')
           .eq('id', props.user.id)
           .single()
+        if (selectError) throw selectError
 
-        const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
+        const currentBalance = parseFloat(userData.balance) || 0
+        const newBalance = currentBalance + REWARD_AMOUNT
 
-        // تحديث الرصيد في جدول users
-        await supabase
+        // تحديث الرصيد
+        const { error: updateError } = await supabase
           .from('users')
           .update({ balance: newBalance })
           .eq('id', props.user.id)
+        if (updateError) throw updateError
 
-        // تحديث الرصيد محليًا في الواجهة
+        // تحديث الرصيد محليًا لعرضه فورًا
         props.user.balance = newBalance
         lastClaimed.value = new Date()
         updateStatus()
@@ -165,10 +162,7 @@ export default {
       }
     }
 
-    // تحديث الحالة كل ثانية
-    setInterval(updateStatus, 1000)
-
-    return { loading, claimReward, canClaim, isCompleted, statusText, loadingTask }
+    return { loading, claimReward, canClaim, isCompleted, isPending, statusText, loadingTask }
   }
 }
 </script>
