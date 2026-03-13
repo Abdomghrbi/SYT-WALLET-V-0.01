@@ -139,15 +139,19 @@ export default {
       
       const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
     
-      navigator.clipboard.writeText(link)
-    .then(() => {
+      try {
+    await navigator.clipboard.writeText(link)
+    showToast.value = true
+
+    // إخفاء الرسالة بعد ثانيتين
+    setTimeout(() => {
+      showToast.value = false
+    }, 2000)
+
+  } catch (err) {
+    console.error('Copy failed')
+      }
       
-      alert('تم نسخ رابط الدعوة بنجاح')
-    })
-    .catch(() => {
-      
-      alert('حدث خطأ أثناء النسخ')
-    })
     }
 
     const shareReferral = () => {
