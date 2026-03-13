@@ -1,7 +1,6 @@
-
 <template>
   <nav class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800">
-    <div class="flex justify-around items-center h-16">
+    <div class="flex justify-around items-center h-26">
       <button
         v-for="tab in tabs"
         :key="tab.id"
