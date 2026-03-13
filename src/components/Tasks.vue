@@ -139,31 +139,32 @@ export default {
           reward_claimed: REWARD_AMOUNT
         })
 
-        // جلب الرصيد الحالي
-        const { data: userData } = await supabase
-          .from('users')
-          .select('balance')
-          .eq('id', props.user.id)
-          .single()
+        try {
+  // جلب الرصيد الحالي
+  const { data: userData, error: selectError } = await supabase
+    .from('users')
+    .select('balance')
+    .eq('id', props.user.id)
+    .single()
+  if (selectError) throw selectError
 
-        const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
+  const currentBalance = parseFloat(userData.balance) || 0
+  const newBalance = currentBalance + REWARD_AMOUNT
 
-        // تحديث الرصيد في جدول users
-        await supabase
-          .from('users')
-          .update({ balance: newBalance })
-          .eq('id', props.user.id)
+  // تحديث الرصيد في جدول users مع التحقق من الخطأ
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({ balance: newBalance })  // تأكد أنه رقم
+    .eq('id', props.user.id)
+  if (updateError) throw updateError
 
-        // تحديث الرصيد محليًا في الواجهة
-        props.user.balance = newBalance
-        lastClaimed.value = new Date()
-        updateStatus()
-      } catch (e) {
-        console.error('خطأ أثناء استلام المكافأة:', e)
-      } finally {
-        loadingTask.value = false
-      }
-    }
+  // تحديث الرصيد محليًا في الواجهة فورًا
+  props.user.balance = newBalance
+  lastClaimed.value = new Date()
+  updateStatus()
+} catch (e) {
+  console.error('خطأ أثناء استلام المكافأة أو تحديث الرصيد:', e)
+}
 
     // تحديث الحالة كل ثانية
     setInterval(updateStatus, 1000)
