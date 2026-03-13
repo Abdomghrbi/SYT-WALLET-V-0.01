@@ -166,7 +166,7 @@ export const useStore = defineStore('main', {
       this.user = data
     },
 
-    // ✅ دالة جديدة: زيادة عدد المهام المكتملة
+
     async incrementTasks() {
       if (!this.user) return
       
