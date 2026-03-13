@@ -1,4 +1,4 @@
-<!-- src/components/Tasks.vue -->
+
 <template>
   <div class="p-4 pb-20">
     <h2 class="text-xl font-bold mb-4">المهام المتاحة</h2>
@@ -8,6 +8,17 @@
       <p class="text-red-400 text-sm font-bold">⚠️ خطأ:</p>
       <p class="text-red-300 text-xs">{{ errorMessage }}</p>
       <button @click="errorMessage = ''" class="text-red-400 text-xs mt-2 underline">إخفاء</button>
+    </div>
+
+    <!-- عرض خطوات التنفيذ -->
+    <div v-if="debugSteps.length > 0" class="bg-blue-900/30 border border-blue-500 rounded-xl p-4 mb-4">
+      <p class="text-blue-400 text-sm font-bold mb-2">🔍 خطوات التنفيذ:</p>
+      <ul class="space-y-1">
+        <li v-for="(step, index) in debugSteps" :key="index" class="text-blue-300 text-xs">
+          {{ index + 1 }}. {{ step }}
+        </li>
+      </ul>
+      <button @click="debugSteps = []" class="text-blue-400 text-xs mt-2 underline">مسح</button>
     </div>
 
     <div v-if="loading" class="flex justify-center p-8">
@@ -73,14 +84,24 @@ export default {
     const lastClaimed = ref(null)
     const justClaimed = ref(false)
     const errorMessage = ref('')
+    const debugSteps = ref([]) // ✅ تسجيل الخطوات
 
     const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
     const REWARD_AMOUNT = 25
     const COOLDOWN_HOURS = 24
 
+    const addStep = (step) => {
+      debugSteps.value.push(`${new Date().toLocaleTimeString()}: ${step}`)
+      console.log(step)
+    }
+
     const fetchLastClaim = async () => {
       loading.value = true
+      addStep('بدء fetchLastClaim')
+      
       try {
+        addStep(`البحث عن مهام المستخدم: ${props.user.id}`)
+        
         const { data, error } = await supabaseAdmin
           .from('user_tasks')
           .select('claimed_at')
@@ -91,18 +112,32 @@ export default {
           .maybeSingle()
 
         if (error) {
+          addStep(`❌ خطأ في البحث: ${error.message}`)
           errorMessage.value = 'fetchLastClaim: ' + error.message
+        } else {
+          addStep(`✅ نتيجة البحث: ${data ? 'found' : 'not found'}`)
         }
         
         lastClaimed.value = data?.claimed_at ? new Date(data.claimed_at) : null
+        addStep(`lastClaimed: ${lastClaimed.value}`)
+        
       } catch (e) {
+        addStep(`❌ catch: ${e.message || e}`)
         errorMessage.value = 'catch fetchLastClaim: ' + (e.message || e)
       } finally {
         loading.value = false
+        addStep('انتهى fetchLastClaim')
       }
     }
 
-    onMounted(fetchLastClaim)
+    onMounted(() => {
+      addStep('onMounted - props.user: ' + JSON.stringify({
+        id: props.user?.id,
+        telegram_id: props.user?.telegram_id,
+        balance: props.user?.balance
+      }))
+      fetchLastClaim()
+    })
 
     const hoursSinceLastClaim = computed(() => {
       if (!lastClaimed.value) return Infinity
@@ -110,7 +145,9 @@ export default {
     })
 
     const canClaim = computed(() => {
-      return hoursSinceLastClaim.value >= COOLDOWN_HOURS || hoursSinceLastClaim.value === Infinity
+      const result = hoursSinceLastClaim.value >= COOLDOWN_HOURS || hoursSinceLastClaim.value === Infinity
+      addStep(`canClaim: ${result} (hours: ${hoursSinceLastClaim.value})`)
+      return result
     })
 
     const statusText = computed(() => {
@@ -121,33 +158,62 @@ export default {
     })
 
     const claimReward = async () => {
-      if (!canClaim.value || loadingTask.value) return
+      addStep('=== بدء claimReward ===')
+      
+      if (!canClaim.value) {
+        addStep('❌ cannot claim - متوقف')
+        return
+      }
+      
+      if (loadingTask.value) {
+        addStep('❌ already loading - متوقف')
+        return
+      }
       
       loadingTask.value = true
       errorMessage.value = ''
+      debugSteps.value = [] // مسح الخطوات القديمة
 
       try {
         const nowISO = new Date().toISOString()
+        addStep(`الوقت الحالي: ${nowISO}`)
 
         if (!props.user?.id) {
+          addStep('❌ معرف المستخدم غير موجود')
           throw new Error('معرف المستخدم غير موجود')
         }
+        
+        addStep(`معرف المستخدم: ${props.user.id}`)
 
-        // إدراج سجل في user_tasks باستخدام supabaseAdmin
-        const { error: taskError } = await supabaseAdmin.from('user_tasks').insert({
+        // ✅ الخطوة 1: إدراج في user_tasks
+        addStep('الخطوة 1: إدراج في user_tasks...')
+        
+        const insertData = {
           user_id: props.user.id,
           task_id: DAILY_TASK_ID,
           status: 'completed',
           completed_at: nowISO,
           claimed_at: nowISO,
           reward_claimed: REWARD_AMOUNT
-        })
+        }
+        addStep(`بيانات الإدراج: ${JSON.stringify(insertData)}`)
+
+        const { data: insertResult, error: taskError } = await supabaseAdmin
+          .from('user_tasks')
+          .insert(insertData)
+          .select()
 
         if (taskError) {
+          addStep(`❌ خطأ في الإدراج: ${taskError.message}`)
+          addStep(`كود الخطأ: ${taskError.code}`)
           throw new Error('user_tasks: ' + taskError.message)
         }
+        
+        addStep(`✅ تم الإدراج بنجاح: ${JSON.stringify(insertResult)}`)
 
-        // جلب الرصيد الحالي باستخدام supabaseAdmin
+        // ✅ الخطوة 2: جلب الرصيد الحالي
+        addStep('الخطوة 2: جلب الرصيد الحالي...')
+        
         const { data: userData, error: fetchError } = await supabaseAdmin
           .from('users')
           .select('balance, total_earned')
@@ -155,39 +221,57 @@ export default {
           .single()
 
         if (fetchError) {
+          addStep(`❌ خطأ في جلب الرصيد: ${fetchError.message}`)
           throw new Error('fetch balance: ' + fetchError.message)
         }
 
         if (!userData) {
+          addStep('❌ لم يتم العثور على المستخدم')
           throw new Error('لم يتم العثور على المستخدم')
         }
+        
+        addStep(`✅ الرصيد الحالي: balance=${userData.balance}, total_earned=${userData.total_earned}`)
 
         const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
         const newTotalEarned = parseFloat(userData.total_earned || 0) + REWARD_AMOUNT
+        
+        addStep(`الرصيد الجديد: ${newBalance}, total_earned الجديد: ${newTotalEarned}`)
 
-        // تحديث الرصيد في جدول users باستخدام supabaseAdmin
-        const { error: updateError } = await supabaseAdmin
+        // ✅ الخطوة 3: تحديث الرصيد
+        addStep('الخطوة 3: تحديث الرصيد...')
+        
+        const { data: updateResult, error: updateError } = await supabaseAdmin
           .from('users')
           .update({ 
             balance: newBalance,
             total_earned: newTotalEarned
           })
           .eq('id', props.user.id)
+          .select()
 
         if (updateError) {
+          addStep(`❌ خطأ في التحديث: ${updateError.message}`)
           throw new Error('update balance: ' + updateError.message)
         }
+        
+        addStep(`✅ تم التحديث بنجاح: ${JSON.stringify(updateResult)}`)
 
-        // تحديث البيانات محليًا
+        // ✅ الخطوة 4: تحديث البيانات محليًا
+        addStep('الخطوة 4: تحديث البيانات محليًا...')
+        
         props.user.balance = newBalance
         props.user.total_earned = newTotalEarned
         lastClaimed.value = new Date()
         justClaimed.value = true
+        
+        addStep('✅ تم الانتهاء بنجاح!')
 
       } catch (e) {
+        addStep(`❌❌ خطأ نهائي: ${e.message}`)
         errorMessage.value = e.message || 'حدث خطأ غير معروف'
       } finally {
         loadingTask.value = false
+        addStep('=== انتهى claimReward ===')
       }
     }
 
@@ -198,7 +282,8 @@ export default {
       justClaimed,
       statusText, 
       loadingTask,
-      errorMessage
+      errorMessage,
+      debugSteps
     }
   }
 }
