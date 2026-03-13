@@ -1,6 +1,7 @@
 
 <template>
   <div class="min-h-screen bg-black text-white">
+    <SpeedInsights />
     <div class="pb-16">
       <Auth v-if="!isAuthenticated" />
       <Home v-else-if="activeTab === 'home'" :user="user" @change-tab="activeTab = $event" />
@@ -16,6 +17,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from './stores/useStore'
+import { SpeedInsights } from '@vercel/speed-insights/vue'
 import Auth from './components/Auth.vue'
 import Navigation from './components/Navigation.vue'
 import Home from './components/Home.vue'
@@ -26,6 +28,7 @@ import Referrals from './components/Referrals.vue'
 export default {
   name: 'App',
   components: {
+    SpeedInsights,
     Auth,
     Navigation,
     Home,
