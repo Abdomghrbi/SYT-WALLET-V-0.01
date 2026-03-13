@@ -10,16 +10,21 @@
       <button @click="errorMessage = ''" class="text-red-400 text-xs mt-2 underline">إخفاء</button>
     </div>
 
-    <!-- عرض خطوات التنفيذ -->
-    <div v-if="debugSteps.length > 0" class="bg-blue-900/30 border border-blue-500 rounded-xl p-4 mb-4">
-      <p class="text-blue-400 text-sm font-bold mb-2">🔍 خطوات التنفيذ:</p>
-      <ul class="space-y-1">
-        <li v-for="(step, index) in debugSteps" :key="index" class="text-blue-300 text-xs">
-          {{ index + 1 }}. {{ step }}
-        </li>
-      </ul>
-      <button @click="debugSteps = []" class="text-blue-400 text-xs mt-2 underline">مسح</button>
-    </div>
+    <!-- عرض خطوات التنفيذ "معدل -->
+    <div v-if="false && debugSteps.length > 0" class="bg-blue-900/30 border border-blue-500 rounded-xl p-4 mb-4">
+  <p class="text-blue-400 text-sm font-bold mb-2">🔍 خطوات التنفيذ:</p>
+  <ul class="space-y-1">
+    <li v-for="(step, index) in debugSteps"
+      :key="index"
+      class="text-blue-300 text-xs">
+      {{ index + 1 }}. {{ step }}
+    </li>
+  </ul>
+  <button
+    @click="debugSteps = []"
+    class="text-blue-400 text-xs mt-2 underline">
+    مسح </button>
+</div>
 
     <div v-if="loading" class="flex justify-center p-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
