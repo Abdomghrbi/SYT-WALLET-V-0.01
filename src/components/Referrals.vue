@@ -140,16 +140,15 @@ export default {
       const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
     
       navigator.clipboard.writeText(link)
-    showToast.value = true
+    .then(() => {
+      
+      alert('تم نسخ رابط الدعوة بنجاح')
+    })
+    .catch(() => {
+      
+      alert('حدث خطأ أثناء النسخ')
+    })
 
-    // إخفاء الرسالة بعد ثانيتين
-    setTimeout(() => {
-      showToast.value = false
-    }, 2000)
-
-  } catch (err) {
-    console.error('Copy failed')
-      }
       
     }
 
