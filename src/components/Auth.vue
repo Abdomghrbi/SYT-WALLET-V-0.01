@@ -52,24 +52,24 @@ export default {
       try {
         const tg = window.Telegram?.WebApp
         
-        // ✅ التحقق من وجود Telegram
+        //  التحقق من وجود Telegram
         if (!tg?.initDataUnsafe?.user) {
           loading.value = false
           return
         }
 
-        // ✅ توسيع الشاشة
+        //  توسيع الشاشة
         tg.expand()
         tg.ready()
 
-        // ✅ تسجيل الدخول (login تستخدم Telegram مباشرة من window)
+        //  تسجيل الدخول (login تستخدم Telegram مباشرة من window)
         const result = await store.login()
         
         if (!result.success) {
           throw new Error(result.error)
         }
 
-        // ✅ إخفاء التحميل عند النجاح (App.vue يتولى الباقي)
+        //  إخفاء التحميل عند النجاح
         loading.value = false
 
       } catch (err) {
@@ -88,7 +88,6 @@ export default {
         balance: 1000,
         referral_code: 'SYT12345',
         referral_count: 5,
-        total_earned: 500,
         wallet_address: '0x1234567890abcdef1234567890abcdef12345678'
       }
       store.isAuthenticated = true
