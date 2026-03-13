@@ -34,7 +34,7 @@
             </div>
             <div>
               <h3 class="font-semibold">مكافأة تسجيل الدخول اليومي</h3>
-              <p class="text-sm text-gray-400">اضغط هنا لاستلام 25 عملة SYT</p>
+          
             </div>
           </div>
           <div class="text-right">
