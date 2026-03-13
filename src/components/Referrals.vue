@@ -43,8 +43,7 @@
         </button>
       </div>
     </div>
-
-
+    
     <!-- قائمة الإحالات -->
     <div class="bg-gray-900 rounded-xl p-4">
       <h3 class="font-semibold mb-4">الإحالات الأخيرة</h3>
@@ -148,11 +147,8 @@ export default {
   
   const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
   
-  // ✅ النص فقط (يحتوي على الرابط بداخله)
-  const text = `انضم لمحفظة SYT واحصل على مكافآت! 🚀\n\n${link}`
-  
   if (window.Telegram?.WebApp) {
-    // ✅ لا نضيف &text، فقط الرابط مع النص بداخله
+  
     window.Telegram.WebApp.openTelegramLink(
       `https://t.me/share/url?url=${encodeURIComponent(link)}`
     )
