@@ -19,7 +19,7 @@
             </div>
             <div>
               <h3 class="font-semibold">مكافأة تسجيل الدخول اليومي</h3>
-        
+              <p class="text-sm text-gray-400">اضغط هنا لاستلام 25 عملة SYT</p>
             </div>
           </div>
 
@@ -40,7 +40,7 @@
             @click="claimReward"
             class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"
           >
-            {{ loadingTask ? 'جارٍ التحميل...' : 'مطالبة' }}
+            {{ loadingTask ? 'جارٍ التحميل...' : 'استلام المكافأة' }}
           </button>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default {
         canClaim.value = false
         isCompleted.value = false
         const remaining = Math.ceil(COOLDOWN_HOURS - hours)
-        statusText.value = `متاح بعد ${remaining} ساعة`
+        statusText.value = `متاحة بعد ${remaining} ساعة`
       }
       if (hours !== Infinity && !canClaim.value) {
         isCompleted.value = true
@@ -123,48 +123,47 @@ export default {
     }
 
     const claimReward = async () => {
-  if (!canClaim.value) return
-  loadingTask.value = true
+      if (!canClaim.value) return
+      loadingTask.value = true
 
-  try {
-    const nowISO = new Date().toISOString()
+      try {
+        const nowISO = new Date().toISOString()
 
-    // تسجيل المهمة في user_tasks
-    const { error: insertError } = await supabase.from('user_tasks').insert({
-      user_id: props.user.id,
-      task_id: DAILY_TASK_ID,
-      status: 'completed',
-      completed_at: nowISO,
-      claimed_at: nowISO,
-      reward_claimed: REWARD_AMOUNT
-    })
-    if (insertError) throw insertError
+        // إدراج سجل في user_tasks
+        await supabase.from('user_tasks').insert({
+          user_id: props.user.id,
+          task_id: DAILY_TASK_ID,
+          status: 'completed',
+          completed_at: nowISO,
+          claimed_at: nowISO,
+          reward_claimed: REWARD_AMOUNT
+        })
 
-    // تحديث الرصيد في users
-    const { data: userData, error: selectError } = await supabase
-      .from('users')
-      .select('balance')
-      .eq('id', props.user.id)
-      .single()
-    if (selectError) throw selectError
+        // جلب الرصيد الحالي
+        const { data: userData } = await supabase
+          .from('users')
+          .select('balance')
+          .eq('id', props.user.id)
+          .single()
 
-    const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
+        const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
 
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ balance: newBalance })
-      .eq('id', props.user.id)
-    if (updateError) throw updateError
+        // تحديث الرصيد في جدول users
+        await supabase
+          .from('users')
+          .update({ balance: newBalance })
+          .eq('id', props.user.id)
 
-    props.user.balance = newBalance
-    lastClaimed.value = new Date()
-    updateStatus()
-  } catch (e) {
-    console.error('خطأ أثناء استلام المكافأة أو تحديث الرصيد:', e)
-  } finally {
-    loadingTask.value = false
-  }
-}
+        // تحديث الرصيد محليًا في الواجهة
+        props.user.balance = newBalance
+        lastClaimed.value = new Date()
+        updateStatus()
+      } catch (e) {
+        console.error('خطأ أثناء استلام المكافأة:', e)
+      } finally {
+        loadingTask.value = false
+      }
+    }
 
     // تحديث الحالة كل ثانية
     setInterval(updateStatus, 1000)
