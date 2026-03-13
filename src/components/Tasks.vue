@@ -64,7 +64,8 @@ export default {
     const loadingTask = ref(false)
     const lastClaimed = ref(null)
 
-    const DAILY_TASK_ID = 1       // رقم المهمة اليومية في جدول tasks
+           // رقم المهمة اليومية في جدول tasks
+   const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
     const REWARD_AMOUNT = 25
     const COOLDOWN_HOURS = 24
 
