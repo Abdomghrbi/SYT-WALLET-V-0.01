@@ -138,7 +138,16 @@ export default {
       if (!code) return
       
       const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
+    
       navigator.clipboard.writeText(link)
+    .then(() => {
+      
+      alert('تم نسخ رابط الدعوة بنجاح')
+    })
+    .catch(() => {
+      
+      alert('حدث خطأ أثناء النسخ')
+    })
     }
 
     const shareReferral = () => {
