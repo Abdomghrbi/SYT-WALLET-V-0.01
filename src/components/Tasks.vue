@@ -1,18 +1,21 @@
-<!-- src/components/Tasks.vue -->
+
 <template>
   <div class="p-4 pb-20">
     <h2 class="text-xl font-bold mb-4">المهام المتاحة</h2>
+
+    <!-- عرض الخطأ -->
+    <div v-if="errorMessage" class="bg-red-900/50 border border-red-500 rounded-xl p-4 mb-4">
+      <p class="text-red-400 text-sm font-bold">⚠️ خطأ:</p>
+      <p class="text-red-300 text-xs">{{ errorMessage }}</p>
+      <button @click="errorMessage = ''" class="text-red-400 text-xs mt-2 underline">إخفاء</button>
+    </div>
 
     <div v-if="loading" class="flex justify-center p-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
     </div>
 
     <div v-else class="space-y-3">
-      <!-- مهمة المكافأة اليومية -->
-      <div
-        class="bg-gray-900 rounded-xl p-4"
-        :class="{ 'opacity-60': justClaimed }"
-      >
+      <div class="bg-gray-900 rounded-xl p-4" :class="{ 'opacity-60': justClaimed }">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-3">
             <div class="bg-blue-500/20 p-2 rounded-lg">
@@ -23,7 +26,6 @@
               <p class="text-sm text-gray-400">اضغط هنا لاستلام 25 عملة SYT</p>
             </div>
           </div>
-
           <div class="text-right">
             <span class="text-green-400 font-bold">+25 SYT</span>
           </div>
@@ -45,10 +47,7 @@
             {{ loadingTask ? 'جارٍ التحميل...' : 'استلام المكافأة' }}
           </button>
 
-          <span
-            v-else-if="justClaimed"
-            class="text-green-400 text-sm font-medium"
-          >
+          <span v-else-if="justClaimed" class="text-green-400 text-sm font-medium">
             ✅ تم الاستلام
           </span>
         </div>
@@ -73,6 +72,7 @@ export default {
     const loadingTask = ref(false)
     const lastClaimed = ref(null)
     const justClaimed = ref(false)
+    const errorMessage = ref('') // ✅ عرض الخطأ على الشاشة
 
     const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
     const REWARD_AMOUNT = 25
@@ -81,7 +81,7 @@ export default {
     const fetchLastClaim = async () => {
       loading.value = true
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('user_tasks')
           .select('claimed_at')
           .eq('user_id', props.user.id)
@@ -90,9 +90,13 @@ export default {
           .limit(1)
           .maybeSingle()
 
+        if (error) {
+          errorMessage.value = 'fetchLastClaim: ' + error.message
+        }
+        
         lastClaimed.value = data?.claimed_at ? new Date(data.claimed_at) : null
       } catch (e) {
-        console.error('خطأ في جلب آخر مكافأة:', e)
+        errorMessage.value = 'catch fetchLastClaim: ' + (e.message || e)
       } finally {
         loading.value = false
       }
@@ -110,16 +114,9 @@ export default {
     })
 
     const statusText = computed(() => {
-      if (justClaimed.value) {
-        return 'تم الاستلام لليوم'
-      }
-      
-      if (canClaim.value) {
-        return 'متاحة الآن'
-      }
-      
-      const hours = hoursSinceLastClaim.value
-      const remaining = Math.ceil(COOLDOWN_HOURS - hours)
+      if (justClaimed.value) return 'تم الاستلام لليوم'
+      if (canClaim.value) return 'متاحة الآن'
+      const remaining = Math.ceil(COOLDOWN_HOURS - hoursSinceLastClaim.value)
       return `متاحة بعد ${remaining} ساعة`
     })
 
@@ -127,9 +124,15 @@ export default {
       if (!canClaim.value || loadingTask.value) return
       
       loadingTask.value = true
+      errorMessage.value = '' // مسح الخطأ السابق
 
       try {
         const nowISO = new Date().toISOString()
+
+        // ✅ التحقق من وجود المستخدم
+        if (!props.user?.id) {
+          throw new Error('معرف المستخدم غير موجود')
+        }
 
         // إدراج سجل في user_tasks
         const { error: taskError } = await supabase.from('user_tasks').insert({
@@ -141,7 +144,9 @@ export default {
           reward_claimed: REWARD_AMOUNT
         })
 
-        if (taskError) throw taskError
+        if (taskError) {
+          throw new Error('user_tasks: ' + taskError.message)
+        }
 
         // جلب الرصيد الحالي
         const { data: userData, error: fetchError } = await supabase
@@ -150,7 +155,13 @@ export default {
           .eq('id', props.user.id)
           .single()
 
-        if (fetchError) throw fetchError
+        if (fetchError) {
+          throw new Error('fetch balance: ' + fetchError.message)
+        }
+
+        if (!userData) {
+          throw new Error('لم يتم العثور على المستخدم')
+        }
 
         const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
         const newTotalEarned = parseFloat(userData.total_earned || 0) + REWARD_AMOUNT
@@ -164,7 +175,9 @@ export default {
           })
           .eq('id', props.user.id)
 
-        if (updateError) throw updateError
+        if (updateError) {
+          throw new Error('update balance: ' + updateError.message)
+        }
 
         // تحديث البيانات محليًا
         props.user.balance = newBalance
@@ -173,8 +186,7 @@ export default {
         justClaimed.value = true
 
       } catch (e) {
-        console.error('خطأ أثناء استلام المكافأة:', e)
-        alert('حدث خطأ، يرجى المحاولة مرة أخرى')
+        errorMessage.value = e.message || 'حدث خطأ غير معروف'
       } finally {
         loadingTask.value = false
       }
@@ -186,7 +198,8 @@ export default {
       canClaim, 
       justClaimed,
       statusText, 
-      loadingTask 
+      loadingTask,
+      errorMessage // ✅ إرجاع للعرض
     }
   }
 }
