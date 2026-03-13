@@ -139,8 +139,7 @@ export default {
       
       const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
     
-      try {
-    await navigator.clipboard.writeText(link)
+      navigator.clipboard.writeText(link)
     showToast.value = true
 
     // إخفاء الرسالة بعد ثانيتين
