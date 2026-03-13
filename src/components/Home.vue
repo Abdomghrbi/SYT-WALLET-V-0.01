@@ -1,4 +1,3 @@
-
 <template>
   <div class="p-4 pb-20">
     <!-- ترحيب -->
@@ -9,7 +8,7 @@
     
     </div>
 
-    <!-- رصيد سريع -->
+    <!-- الرصيد -->
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
       <div class="flex items-center justify-between mb-4">
         <div>
@@ -58,7 +57,7 @@
     <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-4">
       <div class="flex items-center justify-between">
         <div>
-          <h4 class="font-bold text-white mb-1">ادعُ أصدقاءك!</h4>
+          <h4 class="font-bold text-white mb-1">ادعُ أصدقاءك</h4>
           <p class="text-green-200 text-sm">
             احصل على 10% من أرباحهم
           </p>
@@ -66,8 +65,7 @@
         <button 
           @click="$emit('change-tab', 'referrals')"
           class="bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-medium"
-        >
-          دعوة
+        > دعوة
         </button>
       </div>
     </div>
