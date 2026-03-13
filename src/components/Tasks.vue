@@ -31,7 +31,7 @@
         <div class="mt-3 flex items-center justify-between">
           <div class="flex items-center gap-2 text-sm text-gray-500">
             <CheckCircleIcon v-if="isCompleted" size="16" class="text-green-400" />
-            <ClockIcon v-else-if="isPending" size="16" class="text-yellow-400" />
+            <ClockIcon v-else-if="!canClaim" size="16" class="text-yellow-400" />
             <span>{{ statusText }}</span>
           </div>
 
@@ -40,7 +40,7 @@
             @click="claimReward"
             class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"
           >
-            {{ loadingTask ? '...' : 'استلام المكافأة' }}
+            {{ loadingTask ? 'جارٍ التحميل...' : 'استلام المكافأة' }}
           </button>
         </div>
       </div>
@@ -64,8 +64,8 @@ export default {
     const loadingTask = ref(false)
     const lastClaimed = ref(null)
 
-           // رقم المهمة اليومية في جدول tasks
-   const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
+    // UUID المهمة اليومية من جدول tasks
+    const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
     const REWARD_AMOUNT = 25
     const COOLDOWN_HOURS = 24
 
@@ -99,7 +99,6 @@ export default {
 
     const canClaim = ref(false)
     const isCompleted = ref(false)
-    const isPending = ref(true)
     const statusText = ref('جارٍ التحميل...')
 
     const updateStatus = () => {
@@ -107,19 +106,19 @@ export default {
       if (hours >= COOLDOWN_HOURS) {
         canClaim.value = true
         isCompleted.value = false
-        isPending.value = false
         statusText.value = 'متاحة الآن'
       } else if (hours === Infinity) {
         canClaim.value = true
         isCompleted.value = false
-        isPending.value = false
         statusText.value = 'متاحة الآن'
       } else {
         canClaim.value = false
         isCompleted.value = false
-        isPending.value = true
         const remaining = Math.ceil(COOLDOWN_HOURS - hours)
         statusText.value = `متاحة بعد ${remaining} ساعة`
+      }
+      if (hours !== Infinity && !canClaim.value) {
+        isCompleted.value = true
       }
     }
 
@@ -130,7 +129,7 @@ export default {
       try {
         const nowISO = new Date().toISOString()
 
-        // تسجيل المهمة في user_tasks
+        // إدراج سجل في user_tasks
         await supabase.from('user_tasks').insert({
           user_id: props.user.id,
           task_id: DAILY_TASK_ID,
@@ -140,21 +139,22 @@ export default {
           reward_claimed: REWARD_AMOUNT
         })
 
-        // تحديث رصيد المستخدم
+        // جلب الرصيد الحالي
         const { data: userData } = await supabase
           .from('users')
           .select('balance')
           .eq('id', props.user.id)
           .single()
 
-        const newBalance = (userData.balance || 0) + REWARD_AMOUNT
+        const newBalance = parseFloat(userData.balance || 0) + REWARD_AMOUNT
 
+        // تحديث الرصيد في جدول users
         await supabase
           .from('users')
           .update({ balance: newBalance })
           .eq('id', props.user.id)
 
-        // تحديث الرصيد محليًا
+        // تحديث الرصيد محليًا في الواجهة
         props.user.balance = newBalance
         lastClaimed.value = new Date()
         updateStatus()
@@ -165,7 +165,10 @@ export default {
       }
     }
 
-    return { loading, claimReward, canClaim, isCompleted, isPending, statusText, loadingTask }
+    // تحديث الحالة كل ثانية
+    setInterval(updateStatus, 1000)
+
+    return { loading, claimReward, canClaim, isCompleted, statusText, loadingTask }
   }
 }
 </script>
