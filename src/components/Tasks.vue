@@ -7,12 +7,11 @@
     </div>
 
     <div v-else class="space-y-3">
-
+      <!-- مهمة المكافأة اليومية -->
       <div
         class="bg-gray-900 rounded-xl p-4"
         :class="{ 'opacity-60': isCompleted }"
       >
-
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-3">
             <div class="bg-blue-500/20 p-2 rounded-lg">
@@ -41,12 +40,10 @@
             @click="claimReward"
             class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm"
           >
-            {{ loading ? '...' : 'استلام المكافأة' }}
+            {{ loadingTask ? '...' : 'استلام المكافأة' }}
           </button>
         </div>
-
       </div>
-
     </div>
   </div>
 </template>
@@ -67,7 +64,7 @@ export default {
     const loadingTask = ref(false)
     const lastClaimed = ref(null)
 
-    const DAILY_TASK_ID = 'daily-login'  // فقط معرف وهمي للمهمة اليومية
+    const DAILY_TASK_ID = 1       // رقم المهمة اليومية في جدول tasks
     const REWARD_AMOUNT = 25
     const COOLDOWN_HOURS = 24
 
@@ -84,21 +81,19 @@ export default {
           .single()
 
         lastClaimed.value = data?.claimed_at ? new Date(data.claimed_at) : null
-
       } catch (e) {
-        console.error(e)
+        console.error('خطأ في جلب آخر مكافأة:', e)
       } finally {
         loading.value = false
+        updateStatus()
       }
     }
 
     onMounted(fetchLastClaim)
 
-    const now = () => new Date()
-
     const hoursSinceLastClaim = () => {
       if (!lastClaimed.value) return Infinity
-      return (now() - lastClaimed.value) / (1000 * 60 * 60)
+      return (new Date() - lastClaimed.value) / (1000 * 60 * 60)
     }
 
     const canClaim = ref(false)
@@ -107,7 +102,13 @@ export default {
     const statusText = ref('جارٍ التحميل...')
 
     const updateStatus = () => {
-      if (hoursSinceLastClaim() >= COOLDOWN_HOURS) {
+      const hours = hoursSinceLastClaim()
+      if (hours >= COOLDOWN_HOURS) {
+        canClaim.value = true
+        isCompleted.value = false
+        isPending.value = false
+        statusText.value = 'متاحة الآن'
+      } else if (hours === Infinity) {
         canClaim.value = true
         isCompleted.value = false
         isPending.value = false
@@ -116,21 +117,10 @@ export default {
         canClaim.value = false
         isCompleted.value = false
         isPending.value = true
-        const remaining = Math.ceil(COOLDOWN_HOURS - hoursSinceLastClaim())
+        const remaining = Math.ceil(COOLDOWN_HOURS - hours)
         statusText.value = `متاحة بعد ${remaining} ساعة`
       }
-      if (hoursSinceLastClaim() === Infinity) {
-        // لم يستلم من قبل
-        canClaim.value = true
-        isCompleted.value = false
-        isPending.value = false
-        statusText.value = 'متاحة الآن'
-      }
     }
-
-    // تحديث الحالة كل ثانية
-    setInterval(updateStatus, 1000)
-    onMounted(updateStatus)
 
     const claimReward = async () => {
       if (!canClaim.value) return
@@ -139,7 +129,7 @@ export default {
       try {
         const nowISO = new Date().toISOString()
 
-        // إدراج مهمة في user_tasks
+        // تسجيل المهمة في user_tasks
         await supabase.from('user_tasks').insert({
           user_id: props.user.id,
           task_id: DAILY_TASK_ID,
@@ -163,13 +153,12 @@ export default {
           .update({ balance: newBalance })
           .eq('id', props.user.id)
 
-        // تحديث الرصيد محلياً
+        // تحديث الرصيد محليًا
         props.user.balance = newBalance
         lastClaimed.value = new Date()
         updateStatus()
-
       } catch (e) {
-        console.error(e)
+        console.error('خطأ أثناء استلام المكافأة:', e)
       } finally {
         loadingTask.value = false
       }
