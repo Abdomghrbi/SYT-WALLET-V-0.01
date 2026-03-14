@@ -52,6 +52,7 @@
         <UsersIcon size="48" class="mx-auto mb-3 opacity-30" />
         <p>لا يوجد</p>
         <p class="text-sm mt-1">ابدأ بدعوة أصدقائك</p>
+        <p>قريباً...</p>
       </div>
 
       <div v-else class="space-y-3">
