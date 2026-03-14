@@ -46,10 +46,10 @@
       <div class="bg-gray-900 rounded-xl p-4">
         <div class="flex items-center gap-2 mb-2">
           <TrendingUpIcon size="20" class="text-green-400" />
-          <span class="text-gray-400 text-sm">الإحالات</span>
+          <span class="text-gray-400 text-sm">الأصدقاء</span>
         </div>
         <p class="text-2xl font-bold text-white">{{ user?.referral_count || 0 }}</p>
-        <p class="text-xs text-gray-500">صديق دعوته</p>
+        <p class="text-xs text-gray-500">👥</p>
       </div>
     </div>
 
