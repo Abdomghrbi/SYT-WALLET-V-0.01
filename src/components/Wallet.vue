@@ -261,8 +261,27 @@ export default {
             created_at: new Date().toISOString()
           })
 
-        if (txError) throw new Error('فشل تسجيل المعاملة')
+       if (txError) throw new Error('فشل تسجيل المعاملة')
+       
+        // تسجيل معاملة المستلم
+       const { error: receiverTxError } = await supabaseAdmin
+       .from('transactions')
+       .insert({
+        user_id: receiver.id,
+        type: 'deposit',
+        amount: amount,
+        status: 'completed',
+        from_address: props.user.wallet_address,
+        to_address: toAddress,
+        description: `استلام من ${props.user.wallet_address.substring(0, 10)}...`,
+        created_at: new Date().toISOString()
+       })
 
+      if (receiverTxError) {
+      console.error('خطأ في تسجيل معاملة المستلم:', receiverTxError)
+     }
+
+        
         // تحديث المحلي
         props.user.balance = newBalance
         sendSuccess.value = true
