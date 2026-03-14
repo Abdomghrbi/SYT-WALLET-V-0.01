@@ -3,27 +3,13 @@
   <div class="p-4 pb-20">
     <!-- رصيد -->
     <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4">
-      <p class="text-blue-200 text-sm mb-1">الرصيد المتاح</p>
+      <p class="text-blue-200 text-sm mb-1">الرصيد</p>
       <h2 class="text-4xl font-bold text-white mb-2">
         {{ formatBalance(user?.balance || 0) }} <span class="text-xl">SYT</span>
       </h2>
       <p class="text-blue-200 text-sm">≈ ${{ formatUsd(user?.balance || 0) }} USD</p>
     </div>
 
-    <!-- عنوان المحفظة -->
-   <!-- <div class="bg-gray-900 rounded-xl p-4 mb-4">
-      <p class="text-gray-400 text-sm mb-2">عنوان محفظتك</p>
-      <div class="bg-black/30 rounded-lg p-3 flex items-center justify-between">
-        <code class="text-[10px] text-white break-all">{{ user?.wallet_address || 'غير متوفر' }}</code>
-        <button 
-          @click="copyAddress"
-          class="text-blue-400 text-sm flex items-center gap-1 active:scale-95 transition-transform">
-          <CopyIcon size="14" /> نسخ
-        </button>
-      </div>
-    </div> -->
-
-  
     <div v-if="!activeForm" class="grid grid-cols-2 gap-3 mb-4">
       <button 
         @click="activeForm = 'receive'"
