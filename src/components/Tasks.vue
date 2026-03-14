@@ -89,7 +89,7 @@ export default {
     const lastClaimed = ref(null)
     const justClaimed = ref(false)
     const errorMessage = ref('')
-    const debugSteps = ref([]) // ✅ تسجيل الخطوات
+    const debugSteps = ref([]) //  تسجيل الخطوات
 
     const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
     const REWARD_AMOUNT = 25
@@ -190,7 +190,7 @@ export default {
         
         addStep(`معرف المستخدم: ${props.user.id}`)
 
-        // ✅ الخطوة 1: إدراج في user_tasks
+        //  إدراج في user_tasks
         addStep('الخطوة 1: إدراج في user_tasks...')
         
         const insertData = {
@@ -216,7 +216,7 @@ export default {
         
         addStep(`✅ تم الإدراج بنجاح: ${JSON.stringify(insertResult)}`)
 
-        // ✅ الخطوة 2: جلب الرصيد الحالي
+        //  جلب الرصيد الحالي
         addStep('الخطوة 2: جلب الرصيد الحالي...')
         
         const { data: userData, error: fetchError } = await supabaseAdmin
@@ -242,7 +242,7 @@ export default {
         
         addStep(`الرصيد الجديد: ${newBalance}, total_earned الجديد: ${newTotalEarned}`)
 
-        // ✅ الخطوة 3: تحديث الرصيد
+        // تحديث الرصيد
         addStep('الخطوة 3: تحديث الرصيد...')
         
         const { data: updateResult, error: updateError } = await supabaseAdmin
@@ -261,7 +261,7 @@ export default {
         
         addStep(`✅ تم التحديث بنجاح: ${JSON.stringify(updateResult)}`)
 
-        // ✅ الخطوة 4: تحديث البيانات محليًا
+        //  تحديث البيانات محليًا
         addStep('الخطوة 4: تحديث البيانات محليًا...')
         
         props.user.balance = newBalance
