@@ -40,7 +40,7 @@
           <span class="text-gray-400 text-sm">المهام</span>
         </div>
         <p class="text-2xl font-bold text-white">{{ user?.tasks_completed || 0 }}</p>
-        <p class="text-xs text-gray-500">مهمة مكتملة</p>
+        
       </div>
       
       <div class="bg-gray-900 rounded-xl p-4">
