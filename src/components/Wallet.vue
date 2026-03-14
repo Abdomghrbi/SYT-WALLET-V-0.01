@@ -17,32 +17,29 @@
         <code class="text-xs text-white break-all">{{ user?.wallet_address || 'غير متوفر' }}</code>
         <button 
           @click="copyAddress"
-          class="text-blue-400 text-sm flex items-center gap-1 active:scale-95 transition-transform"
-        >
+          class="text-blue-400 text-sm flex items-center gap-1 active:scale-95 transition-transform">
           <CopyIcon size="14" /> نسخ
         </button>
       </div>
     </div>
 
-    <!-- ✅ الأزرار تظهر فقط إذا لا يوجد نموذج مفتوح -->
+  
     <div v-if="!activeForm" class="grid grid-cols-2 gap-3 mb-4">
       <button 
         @click="activeForm = 'receive'"
-        class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 active:scale-95 transition-transform"
-      >
+        class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 active:scale-95 transition-transform">
         <ArrowDownLeftIcon size="24" class="text-green-400" />
         <span class="text-sm">استلام</span>
       </button>
       <button 
         @click="activeForm = 'send'"
-        class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 active:scale-95 transition-transform"
-      >
+        class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 active:scale-95 transition-transform">
         <ArrowUpRightIcon size="24" class="text-red-400" />
         <span class="text-sm">إرسال</span>
       </button>
     </div>
 
-    <!-- ✅ نموذج الاستلام -->
+    <!-- نموذج الاستلام -->
     <div v-if="activeForm === 'receive'" class="bg-gray-900 rounded-xl p-4 mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold flex items-center gap-2">
@@ -51,8 +48,7 @@
         </h3>
         <button 
           @click="activeForm = null" 
-          class="text-gray-400 active:scale-95 transition-transform"
-        >
+          class="text-gray-400 active:scale-95 transition-transform">
           ✕
         </button>
       </div>
@@ -63,14 +59,13 @@
         <code class="text-sm text-white break-all block mb-2">{{ user?.wallet_address }}</code>
         <button 
           @click="copyAddress"
-          class="w-full bg-blue-500 text-white py-2 rounded-lg text-sm active:scale-95 transition-transform"
-        >
+          class="w-full bg-blue-500 text-white py-2 rounded-lg text-sm active:scale-95 transition-transform">
           نسخ العنوان
         </button>
       </div>
     </div>
 
-    <!-- ✅ نموذج الإرسال -->
+    <!-- نموذج الإرسال -->
     <div v-if="activeForm === 'send'" class="bg-gray-900 rounded-xl p-4 mb-4">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-semibold flex items-center gap-2">
@@ -79,8 +74,7 @@
         </h3>
         <button 
           @click="activeForm = null" 
-          class="text-gray-400 active:scale-95 transition-transform"
-        >
+          class="text-gray-400 active:scale-95 transition-transform">
           ✕
         </button>
       </div>
@@ -102,8 +96,7 @@
             v-model="sendForm.toAddress"
             type="text"
             placeholder="0x..."
-            class="w-full bg-black/30 text-white p-3 rounded-lg text-sm border border-gray-700 focus:border-blue-500 outline-none"
-          />
+            class="w-full bg-black/30 text-white p-3 rounded-lg text-sm border border-gray-700 focus:border-blue-500 outline-none"/>
         </div>
 
         <div>
@@ -114,16 +107,14 @@
             placeholder="0.00"
             step="0.00000001"
             min="0"
-            class="w-full bg-black/30 text-white p-3 rounded-lg text-sm border border-gray-700 focus:border-blue-500 outline-none"
-          />
+            class="w-full bg-black/30 text-white p-3 rounded-lg text-sm border border-gray-700 focus:border-blue-500 outline-none"/>
           <p class="text-gray-500 text-xs mt-1">الرصيد المتاح: {{ formatBalance(user?.balance) }} SYT</p>
         </div>
 
         <button 
           @click="handleSend"
           :disabled="sending || !sendForm.toAddress || !sendForm.amount || sendForm.amount <= 0"
-          class="w-full bg-red-500 text-white py-3 rounded-lg text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+          class="w-full bg-red-500 text-white py-3 rounded-lg text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
           {{ sending ? 'جارٍ الإرسال...' : 'إرسال' }}
         </button>
       </div>
@@ -176,7 +167,6 @@ export default {
   setup(props) {
     const transactions = ref([])
     
-    // ✅ حالة واحدة فقط: null | 'receive' | 'send'
     const activeForm = ref(null)
     
     const sendForm = ref({
