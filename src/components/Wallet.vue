@@ -14,7 +14,7 @@
     <div class="bg-gray-900 rounded-xl p-4 mb-4">
       <p class="text-gray-400 text-sm mb-2">عنوان محفظتك</p>
       <div class="bg-black/30 rounded-lg p-3 flex items-center justify-between">
-        <code class="text-sm text-white break-all">{{ user?.wallet_address || 'غير متوفر' }}</code>
+        <code class="text-[8px] text-white break-all">{{ user?.wallet_address || 'غير متوفر' }}</code>
         <button 
           @click="copyAddress"
           class="text-blue-400 text-sm flex items-center gap-1 active:scale-95 transition-transform">
