@@ -92,11 +92,11 @@ export default {
   },
   emits: ['change-tab'],
   setup() {
-    const formatUsd = (val) => ((val || 0) * 0.0001).toFixed(2)
-    
+        
     const formatBalance = (balance) => {
       return balance ? parseFloat(balance).toFixed(4) : '0.0000'
-          
+         const formatUsd = (val) => ((val || 0) * 0.0001).toFixed(2)
+      
     }
 
     return {
