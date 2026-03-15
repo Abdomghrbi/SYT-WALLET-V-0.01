@@ -14,11 +14,10 @@
         <div>
           <p class="text-blue-200 text-sm mb-1">الرصيد</p>
           <h2 class="text-3xl font-bold text-white">
-            {{ formatBalance(user?.balance) }} <span class="text-lg">SYT</span>
-         <p class="text-blue-200 text-sm">≈ ${{ formatUsd(user?.balance || 0) }} USD</p>
-            
+            {{ formatBalance(user?.balance) }} <span class="text-lg">SYT</span>  
           </h2>
-    
+    <p class="text-blue-200 text-sm">≈ ${{ formatUsd(user?.balance || 0) }} USD</p>
+          
         </div>
         <div class="bg-white/20 p-3 rounded-xl">
           <WalletIcon size="32" class="text-white" />
