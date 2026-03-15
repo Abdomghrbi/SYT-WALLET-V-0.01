@@ -77,7 +77,7 @@ export const useStore = defineStore('main', {
             username: tgUser.username,
             first_name: tgUser.first_name,
             last_name: tgUser.last_name,
-            photo_url: tgUser.photo_url,
+            //photo_url: tgUser.photo_url,
             language_code: tgUser.language_code || 'ar',
             wallet_address: generateWalletAddress(tgUser.id),
             referral_code: generateReferralCode(),
