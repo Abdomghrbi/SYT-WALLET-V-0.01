@@ -92,10 +92,10 @@ export default {
   },
   emits: ['change-tab'],
   setup() {
+    
     const formatBalance = (balance) => {
       return balance ? parseFloat(balance).toFixed(4) : '0.0000'
-    const formatDate = (date) => new Date(date).toLocaleDateString('ar-SA')
-      
+          
     }
 
     return {
