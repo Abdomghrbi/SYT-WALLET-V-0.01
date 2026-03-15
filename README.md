@@ -1,2 +1,32 @@
-# SYT-WALLET-V-0.01
- "مشروع SYT-WALLET-V1 - محفظة Telegram Mini App\n\nالتقنيات:\n- Frontend: Vue 3 + Options API + Vite + Tailwind CSS\n- Database: Supabase (PostgreSQL)\n- State: Pinia (useStore)\n- Backend: supabaseAdmin (Service Role) للكتابة، supabase (Anon) للقراءة\n\nالمميزات المنفذة:\n1. تسجيل دخول عبر Telegram WebApp (initData)\n2. إنشاء مستخدم تلقائي مع wallet_address و referral_code\n3. مهمة مكافأة يومية (+1 SYT) بدون فترة انتظار\n4. نظام إرسال واستلام SYT بين المستخدمين\n5. سجل معاملات كامل (transactions)\n6. نظام إحالات (referral_code)\n7. واجهة متكاملة (Home, Tasks, Wallet, Referrals, Navigation)\n\nالملفات الرئيسية:\n- useStore.js: إدارة الحالة والمستخدم\n- supabaseAdmin.js: اتصال Supabase بـ Service Role\n- Tasks.vue: مهمة المكافأة اليومية\n- Wallet.vue: إرسال/استلام + سجل المعاملات\n- Home.vue: الصفحة الرئيسية مع إحصائيات\n- Referrals.vue: نظام الإحالات\n\nمتغيرات البيئة:\n- VITE_SUPABASE_URL\n- VITE_SUPABASE_ANON_KEY\n- VITE_SUPABASE_SERVICE_KEY\n\nملاحظات:\n- RLS مفعل على Supabase\n- يستخدم supabaseAdmin للعمليات التي تتطلب كتابة (تجاوز RLS)\n- لا يستخدم localStorage لتخزين الجلسة"})
+
+ "مشروع SYT-WALLET-V1
+  Telegram Mini App
+  
+ التقنيات:
+ Frontend: Vue 3 + Options API
+ + Vite + Tailwind CSS
+ 
+  Database: Supabase (PostgreSQL) State: Pinia (useStore)
+  
+ Backend: supabaseAdmin (Service Role) للكتابة
+ supabase (Anon) للقراءة
+ المميزات: 
+ 
+ المنفذ: تسجيل دخول عبر Telegram WebApp
+ (initData). إنشاء مستخدم تلقائي مع wallet_address و referral_code
+ 
+ مهمة مكافأة يومية (25+ SYT) كل 24 ساعة.
+ نظام إرسال واستلام SYT بين المستخدمين.
+ سجل معاملات كامل (transactions).
+ نظام إحالات (referral_code) قريباً"تحتاج API"
+ 
+ واجهة متكاملة (Home, Tasks, Wallet, Referrals, Navigation)
+
+متغيرات البيئة: 
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+VITE_SUPABASE_SERVICE_KEY
+
+ملاحظات:  RLS مفعل على Supabase
+يستخدم supabaseAdmin للعمليات التي تتطلب كتابة 
+لا يستخدم localStorage لتخزين الجلسة.
