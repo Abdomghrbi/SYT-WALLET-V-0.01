@@ -176,7 +176,7 @@ export default {
     }
 
     const formatBalance = (val) => parseFloat(val || 0).toFixed(4)
-    const formatUsd = (val) => ((val || 0) * 0.001).toFixed(2)
+    const formatUsd = (val) => ((val || 0) * 0.0001).toFixed(2)
     const formatDate = (date) => new Date(date).toLocaleDateString('ar-SA')
     
     const copyAddress = () => {
