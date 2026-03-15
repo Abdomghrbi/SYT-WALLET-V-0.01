@@ -15,9 +15,7 @@
           <p class="text-blue-200 text-sm mb-1">الرصيد</p>
           <h2 class="text-3xl font-bold text-white">
             {{ formatBalance(user?.balance) }} <span class="text-lg">SYT</span>  
-          </h2>
-    <p class="text-blue-200 text-sm">≈ ${{ formatUsd(user?.balance || 0) }} USD</p>
-          
+          </h2>     
         </div>
         <div class="bg-white/20 p-3 rounded-xl">
           <WalletIcon size="32" class="text-white" />
@@ -95,8 +93,7 @@ export default {
         
     const formatBalance = (balance) => {
       return balance ? parseFloat(balance).toFixed(4) : '0.0000'
-         const formatUsd = (val) => ((val || 0) * 0.0001).toFixed(2)
-      
+               
     }
 
     return {
