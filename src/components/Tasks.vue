@@ -57,7 +57,7 @@
             </div>
           </div>
           <div class="text-right">
-            <span class="text-green-400 font-bold">+1 SYT</span>
+            <span class="text-green-400 font-bold">+25 SYT</span>
           </div>
         </div>
 
