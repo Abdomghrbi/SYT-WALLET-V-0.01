@@ -13,7 +13,7 @@
       <div class="flex items-center justify-between mb-4">
         <div>
           <p class="text-blue-200 text-sm mb-1">الرصيد</p>
-          <h2 class="text-3xl font-bold text-white">
+          <h2 class="text-2xl font-bold text-white">
             {{ formatBalance(user?.balance) }} <span class="text-lg">SYT</span>  
           </h2>     
         </div>
