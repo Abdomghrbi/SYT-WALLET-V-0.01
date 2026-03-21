@@ -138,7 +138,7 @@ export default {
       const code = props.user?.referral_code
       if (!code) return
       
-      const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
+      const link = `https://t.me/SYT_Wallet_bot?start=${code}`
     
       navigator.clipboard.writeText(link)
     .then(() => {
@@ -157,7 +157,7 @@ export default {
   const code = props.user?.referral_code
   if (!code) return
   
-  const link = `https://t.me/SYT_Wallet_Test_bot?start=${code}`
+  const link = `https://t.me/SYT_Wallet_bot?start=${code}`
   
   if (window.Telegram?.WebApp) {
   
