@@ -48,49 +48,48 @@ export default {
     
     // دالة تحديث حالة الإحالة
 const updateReferralStatus = async () => {
+  // جلب الكود من أي مصدر متاح
   let refCode = null
   
-  // محاولة ١: من URL العادي (للاختبار خارج Telegram)
+  // مصدر ١: URL العادي
   const urlParams = new URLSearchParams(window.location.search)
   refCode = urlParams.get('start') || urlParams.get('ref')
   
-  // محاولة ٢: من Telegram Web App
-  if (!refCode && window.Telegram?.WebApp) {
-    const tg = window.Telegram.WebApp
-    const initData = tg.initDataUnsafe
-    
-    // الكود ممكن يكون بـ start_param
-    refCode = initData?.start_param
-    
-    // أو بـ ref
-    if (!refCode) {
-      refCode = new URLSearchParams(tg.initData).get('start')
-    }
+  // مصدر ٢: Telegram WebApp
+  if (!refCode && window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
+    refCode = window.Telegram.WebApp.initDataUnsafe.start_param
   }
   
-  console.log('الكود المستخرج:', refCode) // للتأكد
+  console.log('🎯 الكود:', refCode)
   
-  if (refCode && refCode.startsWith('SYT')) {
-    try {
-      // التحديث باستخدام الكود فقط (بدون referred_telegram_id)
-      const { data, error } = await supabase
-        .from('referrals')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('referrer_code', refCode)
-        .eq('status', 'pending')
-        .select()
-      
-      if (error) {
-        console.error('خطأ بتحديث الإحالة:', error)
-      } else {
-        console.log('✅ تم تحديث الإحالة:', refCode, 'الصفوف:', data?.length)
-      }
-    } catch (err) {
-      console.error('خطأ:', err)
+  if (!refCode || !refCode.startsWith('SYT')) {
+    console.log('❌ ما في كود صالح')
+    return
+  }
+  
+  try {
+    // تحديث أول إحالة pending بهاد الكود (أحدث واحدة)
+    const { data, error } = await supabase
+      .from('referrals')
+      .update({ 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+      .eq('referrer_code', refCode)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .select()
+    
+    if (error) {
+      console.error('❌ خطأ:', error.message)
+    } else if (data && data.length > 0) {
+      console.log('✅ تم التحديث:', data[0].id)
+    } else {
+      console.log('⚠️ ما لقينا إحالة pending بهاد الكود')
     }
+  } catch (err) {
+    console.error('❌ خطأ عام:', err)
   }
 }
     
