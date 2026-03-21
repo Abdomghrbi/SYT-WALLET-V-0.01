@@ -47,31 +47,52 @@ export default {
     const activeTab = ref('home')
     
     // دالة تحديث حالة الإحالة
-    const updateReferralStatus = async () => {
-      const urlParams = new URLSearchParams(window.location.search)
-      const refCode = urlParams.get('start') || urlParams.get('ref')
-      
-      if (refCode && refCode.startsWith('SYT')) {
-        try {
-          const { error } = await supabase
-            .from('referrals')
-            .update({ 
-              status: 'completed',
-              completed_at: new Date().toISOString()
-            })
-            .eq('referrer_code', refCode)
-            .eq('status', 'pending')
-          
-          if (error) {
-            console.error('خطأ بتحديث الإحالة:', error)
-          } else {
-            console.log('✅ تم تحديث الإحالة:', refCode)
-          }
-        } catch (err) {
-          console.error('خطأ:', err)
-        }
-      }
+const updateReferralStatus = async () => {
+  let refCode = null
+  
+  // محاولة ١: من URL العادي (للاختبار خارج Telegram)
+  const urlParams = new URLSearchParams(window.location.search)
+  refCode = urlParams.get('start') || urlParams.get('ref')
+  
+  // محاولة ٢: من Telegram Web App
+  if (!refCode && window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp
+    const initData = tg.initDataUnsafe
+    
+    // الكود ممكن يكون بـ start_param
+    refCode = initData?.start_param
+    
+    // أو بـ ref
+    if (!refCode) {
+      refCode = new URLSearchParams(tg.initData).get('start')
     }
+  }
+  
+  console.log('الكود المستخرج:', refCode) // للتأكد
+  
+  if (refCode && refCode.startsWith('SYT')) {
+    try {
+      // التحديث باستخدام الكود فقط (بدون referred_telegram_id)
+      const { data, error } = await supabase
+        .from('referrals')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('referrer_code', refCode)
+        .eq('status', 'pending')
+        .select()
+      
+      if (error) {
+        console.error('خطأ بتحديث الإحالة:', error)
+      } else {
+        console.log('✅ تم تحديث الإحالة:', refCode, 'الصفوف:', data?.length)
+      }
+    } catch (err) {
+      console.error('خطأ:', err)
+    }
+  }
+}
     
     onMounted(() => {
       store.checkAuth()
