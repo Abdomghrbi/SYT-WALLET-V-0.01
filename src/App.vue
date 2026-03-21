@@ -48,27 +48,39 @@ export default {
     
     // دالة تحديث حالة الإحالة
 const updateReferralStatus = async () => {
-  // جلب الكود من أي مصدر متاح
   let refCode = null
   
-  // مصدر ١: URL العادي
+  // مصدر ١: URL العادي (للاختبار)
   const urlParams = new URLSearchParams(window.location.search)
-  refCode = urlParams.get('start') || urlParams.get('ref')
+  refCode = urlParams.get('ref') || urlParams.get('start')
   
-  // مصدر ٢: Telegram WebApp
-  if (!refCode && window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
-    refCode = window.Telegram.WebApp.initDataUnsafe.start_param
+  // مصدر ٢: Telegram WebApp initData
+  if (!refCode && window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp
+    
+    // الطريقة ١: من start_param
+    refCode = tg.initDataUnsafe?.start_param
+    
+    // الطريقة ٢: من initData كـ string
+    if (!refCode && tg.initData) {
+      const initDataParams = new URLSearchParams(tg.initData)
+      refCode = initDataParams.get('start_param')
+    }
+    
+    // طباعة للتصحيح
+    console.log('Telegram initDataUnsafe:', tg.initDataUnsafe)
+    console.log('Telegram initData:', tg.initData)
   }
   
-  console.log('🎯 الكود:', refCode)
+  console.log('🎯 الكود النهائي:', refCode)
   
   if (!refCode || !refCode.startsWith('SYT')) {
     console.log('❌ ما في كود صالح')
     return
   }
   
+  // ... باقي الكود نفسه (التحديث بـ Supabase)
   try {
-    // تحديث أول إحالة pending بهاد الكود (أحدث واحدة)
     const { data, error } = await supabase
       .from('referrals')
       .update({ 
@@ -77,8 +89,6 @@ const updateReferralStatus = async () => {
       })
       .eq('referrer_code', refCode)
       .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(1)
       .select()
     
     if (error) {
@@ -86,7 +96,7 @@ const updateReferralStatus = async () => {
     } else if (data && data.length > 0) {
       console.log('✅ تم التحديث:', data[0].id)
     } else {
-      console.log('⚠️ ما لقينا إحالة pending بهاد الكود')
+      console.log('⚠️ ما لقينا إحالة pending')
     }
   } catch (err) {
     console.error('❌ خطأ عام:', err)
