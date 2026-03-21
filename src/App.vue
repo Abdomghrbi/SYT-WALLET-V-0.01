@@ -10,6 +10,21 @@
     </div>
     
     <Navigation v-if="isAuthenticated" :active-tab="activeTab" @change-tab="activeTab = $event" />
+    
+    <!-- Debug Console -->
+    <div v-if="showConsole" class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-4 max-h-48 overflow-auto z-50 font-mono text-xs">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-green-400 font-bold">🔧 Debug</span>
+        <button @click="showConsole = false" class="text-red-400">✕</button>
+      </div>
+      <div v-for="(log, i) in consoleLogs" :key="i" :class="log.type === 'error' ? 'text-red-400' : log.type === 'warn' ? 'text-yellow-400' : 'text-green-300'" class="mb-1">
+        {{ log.time }} | {{ log.message }}
+      </div>
+    </div>
+    
+    <button v-if="!showConsole" @click="showConsole = true" class="fixed bottom-20 right-4 bg-gray-800 text-white px-3 py-2 rounded-full text-xs z-50 border border-gray-600">
+      🐛
+    </button>
   </div>
 </template>
 
@@ -25,10 +40,8 @@ import Tasks from './components/Tasks.vue'
 import Wallet from './components/Wallet.vue'
 import Referrals from './components/Referrals.vue'
 
-// استخدام متغيرات البيئة من Vercel
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 export default {
@@ -45,73 +58,95 @@ export default {
   setup() {
     const store = useStore()
     const activeTab = ref('home')
-    
-    // دالة تحديث حالة الإحالة
-const updateReferralStatus = async () => {
-  let refCode = null
-  
-  // مصدر ١: URL العادي (للاختبار)
-  const urlParams = new URLSearchParams(window.location.search)
-  refCode = urlParams.get('ref') || urlParams.get('start')
-  
-  // مصدر ٢: Telegram WebApp initData
-  if (!refCode && window.Telegram?.WebApp) {
-    const tg = window.Telegram.WebApp
-    
-    // الطريقة ١: من start_param
-    refCode = tg.initDataUnsafe?.start_param
-    
-    // الطريقة ٢: من initData كـ string
-    if (!refCode && tg.initData) {
-      const initDataParams = new URLSearchParams(tg.initData)
-      refCode = initDataParams.get('start_param')
+    const showConsole = ref(false)
+    const consoleLogs = ref([])
+
+    const addLog = (msg, type = 'info') => {
+      const time = new Date().toLocaleTimeString()
+      consoleLogs.value.push({ time, message: msg, type })
+      if (type === 'error') console.error(msg)
+      else if (type === 'warn') console.warn(msg)
+      else console.log(msg)
     }
-    
-    // طباعة للتصحيح
-    console.log('Telegram initDataUnsafe:', tg.initDataUnsafe)
-    console.log('Telegram initData:', tg.initData)
-  }
-  
-  console.log('🎯 الكود النهائي:', refCode)
-  
-  if (!refCode || !refCode.startsWith('SYT')) {
-    console.log('❌ ما في كود صالح')
-    return
-  }
-  
-  // ... باقي الكود نفسه (التحديث بـ Supabase)
-  try {
-    const { data, error } = await supabase
-      .from('referrals')
-      .update({ 
-        status: 'completed',
-        completed_at: new Date().toISOString()
-      })
-      .eq('referrer_code', refCode)
-      .eq('status', 'pending')
-      .select()
-    
-    if (error) {
-      console.error('❌ خطأ:', error.message)
-    } else if (data && data.length > 0) {
-      console.log('✅ تم التحديث:', data[0].id)
-    } else {
-      console.log('⚠️ ما لقينا إحالة pending')
+
+    const updateReferralStatus = async () => {
+      addLog('=== بدء التحقق ===')
+      
+      const url = window.location.href
+      const search = window.location.search
+      const tg = window.Telegram?.WebApp
+      
+      addLog(`URL: ${url}`)
+      addLog(`Search: ${search}`)
+      addLog(`Telegram: ${!!tg}`)
+      
+      let refCode = null
+      
+      // محاولة ١: URL
+      const urlParams = new URLSearchParams(search)
+      refCode = urlParams.get('ref') || urlParams.get('start')
+      addLog(`من URL: ${refCode || 'فاضي'}`)
+      
+      // محاولة ٢: Telegram
+      if (!refCode && tg) {
+        addLog(`initDataUnsafe: ${JSON.stringify(tg.initDataUnsafe)}`)
+        addLog(`initData: ${tg.initData?.substring(0, 50) || 'فاضي'}`)
+        
+        refCode = tg.initDataUnsafe?.start_param
+        
+        if (!refCode && tg.initData) {
+          try {
+            const params = new URLSearchParams(tg.initData)
+            refCode = params.get('start_param')
+          } catch (e) {
+            addLog(`خطأ parsing: ${e.message}`, 'error')
+          }
+        }
+        addLog(`من Telegram: ${refCode || 'فاضي'}`)
+      }
+      
+      addLog(`🎯 النهائي: ${refCode || 'NULL'}`, refCode ? 'info' : 'warn')
+      
+      if (!refCode || !refCode.startsWith('SYT')) {
+        addLog('❌ كود غير صالح', 'error')
+        return
+      }
+      
+      addLog('جاري تحديث Supabase...')
+      try {
+        const { data, error } = await supabase
+          .from('referrals')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('referrer_code', refCode)
+          .eq('status', 'pending')
+          .select()
+        
+        if (error) {
+          addLog(`❌ خطأ: ${error.message}`, 'error')
+        } else if (data && data.length > 0) {
+          addLog(`✅ تم! ID: ${data[0].id}`)
+        } else {
+          addLog(`⚠️ ما لقينا إحالة`, 'warn')
+        }
+      } catch (err) {
+        addLog(`❌ خطأ: ${err.message}`, 'error')
+      }
     }
-  } catch (err) {
-    console.error('❌ خطأ عام:', err)
-  }
-}
-    
+
     onMounted(() => {
       store.checkAuth()
-      updateReferralStatus() // تحديث الإحالة عند فتح التطبيق
+      setTimeout(updateReferralStatus, 500)
     })
-    
+
     return {
       activeTab,
       isAuthenticated: computed(() => store.isAuthenticated),
-      user: computed(() => store.user)
+      user: computed(() => store.user),
+      showConsole,
+      consoleLogs
     }
   }
 }
