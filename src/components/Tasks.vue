@@ -53,7 +53,6 @@
             </div>
             <div>
               <h3 class="font-semibold">مكافأة تسجيل الدخول اليومي</h3>
-              <p class="text-sm text-gray-400">اضغط للاستلام</p>
             </div>
           </div>
           <div class="text-right">
@@ -106,7 +105,7 @@ export default {
 
     // ✅ المهمة اليومية
     const DAILY_TASK_ID = '550e8400-e29b-41d4-a716-446655440000'
-    const DAILY_REWARD = 1
+    const DAILY_REWARD = 25
     const COOLDOWN_HOURS = 24
     const loading = ref(true)
     const loadingDaily = ref(false)
