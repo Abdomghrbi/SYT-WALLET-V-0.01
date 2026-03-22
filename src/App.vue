@@ -77,21 +77,27 @@ export default {
   }
   
   if (!refCode || !refCode.startsWith('SYT')) return
+
+        try {
+  const { data, error } = await supabase  // ← هون بنستخرج error
+    .from('referrals')
+    .update({...})
+    .eq('referrer_code', refCode)
+    .eq('status', 'pending')
+    .select();
   
-  // تحديث Supabase
-  try {
-    await supabase
-      .from('referrals')
-      .update({ 
-        status: 'completed',
-        completed_at: new Date().toISOString()
-      })
-      .eq('referrer_code', refCode)
-      .eq('status', 'pending')
-  } catch (err) {
-    console.error('خطأ:', err)
+  if (error) {
+    console.log('خطأ Supabase:', error.message); // ← RLS رح يظهر هون
+  } else if (!data || data.length === 0) {
+    console.log('ما لقينا الصف');
+  } else {
+    console.log('تمام!');
   }
-      }
+} catch (err) {
+  console.log('خطأ عام:', err);
+        }
+  // تحديث Supabase
+  
 
     onMounted(() => {
       store.checkAuth()
