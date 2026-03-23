@@ -1,5 +1,5 @@
 
- "مشروع SYT-WALLET-V1
+ "مشروع  SYT-WALLET-V1
   Telegram Mini App
   
  التقنيات:
