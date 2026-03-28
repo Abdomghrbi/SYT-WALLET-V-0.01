@@ -77,7 +77,7 @@
           </button>
 
           <span v-else-if="dailyJustClaimed" class="text-green-400 text-sm font-medium">
-            ✅ تم الاستلام
+            ✅
           </span>
         </div>
       </div>
