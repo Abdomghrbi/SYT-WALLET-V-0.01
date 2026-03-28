@@ -4,7 +4,7 @@
     <div class="grid grid-cols-2 gap-3 mb-4">
       <div class="bg-gray-900 rounded-xl p-4 text-center">
         <UsersIcon size="24" class="mx-auto mb-2 text-blue-400" />
-        <p class="text-2xl font-bold text-white">{{ user?.referral_count || 0 }}</p>
+        <p class="text-2xl font-bold text-white">{{ count || 0 }}</p>
         <p class="text-xs text-gray-400">عدد الإحالات</p>
       </div>
       <div class="bg-gray-900 rounded-xl p-4 text-center">
@@ -111,9 +111,11 @@ export default {
 
     const fetchReferrals = async () => {
       const { data } = await supabase
-        .from('referrals')
-        .select(`*,referred:referred_id (first_name, username, created_at)`)
-        .eq('referrer_code', props.user.id)
+        
+    .from('referrals')
+    .select('*', { count: 'exact', head: true })
+    .eq('referrer_code');
+        
         .order('created_at', { ascending: false })
 
       referrals.value = data || []
