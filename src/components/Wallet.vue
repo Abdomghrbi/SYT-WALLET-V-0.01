@@ -31,29 +31,8 @@
         
         <!-- خيارات وسائل الدفع -->
         <div class="grid grid-cols-3 gap-4 mb-6">
-          <!-- PayPal -->
-          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
-            <img src="https://kimi-web-img.moonshot.cn/img/static.vecteezy.com/9c8e7af4cd153f230a7758658d41d8febe660f65.png" alt="PayPal" class="w-12 h-12 object-contain" />
-            <span class="text-gray-300 text-xs">PayPal</span>
-          </div>
           
-          <!-- Payeer -->
-          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
-            <img src="https://kimi-web-img.moonshot.cn/img/appletec.ru/6067f96f4f81fed25b01f2b6bee91a18456a18b0.png" alt="Payeer" class="w-12 h-12 object-contain" />
-            <span class="text-gray-300 text-xs">Payeer</span>
-          </div>
           
-          <!-- Perfect Money -->
-          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
-            <img src="https://kimi-web-img.moonshot.cn/img/1000logos.net/e963ae8eee840e0a26feef75f71ea822e818dd91.jpg" alt="Perfect Money" class="w-12 h-12 object-contain" />
-            <span class="text-gray-300 text-xs">Perfect Money</span>
-          </div>
-          
-          <!-- Binance -->
-          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
-            <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-black font-bold text-lg">B</div>
-            <span class="text-gray-300 text-xs">Binance</span>
-          </div>
           
           <!-- USDT -->
           <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
