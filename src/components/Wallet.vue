@@ -40,7 +40,7 @@
           <!-- USDT -->
           <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
             <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">USDT</div>
-            <span class="text-gray-300 text-xs">USDT TRC20</span>
+            <span class="text-gray-300 text-xs">TRC20</span>
           </div>
           
           <!-- Bitcoin -->
