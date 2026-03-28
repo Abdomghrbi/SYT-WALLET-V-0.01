@@ -1,0 +1,423 @@
+<template>
+  <div class="p-4 pb-20">
+    <!-- رصيد -->
+    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 mb-4 relative">
+      <!-- زر السحب -->
+      <button 
+        @click="showWithdrawModal = true"
+        class="absolute top-4 left-4 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+        <ArrowUpLeftIcon size="16" />
+        سحب
+      </button>
+      
+      <p class="text-blue-200 text-sm mb-1">الرصيد</p>
+      <h2 class="text-4xl font-bold text-white mb-2">
+        {{ formatBalance(user?.balance || 0) }} <span class="text-xl">SYT</span>
+      </h2>
+      <p class="text-blue-200 text-sm">≈ ${{ formatUsd(user?.balance || 0) }} USD</p>
+    </div>
+
+    <!-- نافذة السحب المنبثقة -->
+    <div v-if="showWithdrawModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div class="bg-gray-900 rounded-2xl w-full max-w-md p-6 relative">
+        <!-- زر الإغلاق -->
+        <button 
+          @click="showWithdrawModal = false"
+          class="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors">
+          <XIcon size="24" />
+        </button>
+        
+        <h3 class="text-xl font-bold text-white mb-6 text-center">اختيار طريقة السحب</h3>
+        
+        <!-- خيارات وسائل الدفع -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <!-- PayPal -->
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <img src="https://kimi-web-img.moonshot.cn/img/static.vecteezy.com/9c8e7af4cd153f230a7758658d41d8febe660f65.png" alt="PayPal" class="w-12 h-12 object-contain" />
+            <span class="text-gray-300 text-xs">PayPal</span>
+          </div>
+          
+          <!-- Payeer -->
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <img src="https://kimi-web-img.moonshot.cn/img/appletec.ru/6067f96f4f81fed25b01f2b6bee91a18456a18b0.png" alt="Payeer" class="w-12 h-12 object-contain" />
+            <span class="text-gray-300 text-xs">Payeer</span>
+          </div>
+          
+          <!-- Perfect Money -->
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <img src="https://kimi-web-img.moonshot.cn/img/1000logos.net/e963ae8eee840e0a26feef75f71ea822e818dd91.jpg" alt="Perfect Money" class="w-12 h-12 object-contain" />
+            <span class="text-gray-300 text-xs">Perfect Money</span>
+          </div>
+          
+          <!-- Binance -->
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-black font-bold text-lg">B</div>
+            <span class="text-gray-300 text-xs">Binance</span>
+          </div>
+          
+          <!-- USDT -->
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">USDT</div>
+            <span class="text-gray-300 text-xs">USDT TRC20</span>
+          </div>
+          
+          <!-- Bitcoin -->
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">₿</div>
+            <span class="text-gray-300 text-xs">Bitcoin</span>
+          </div>
+        </div>
+        
+        <!-- زر قريباً -->
+        <button 
+          disabled
+          class="w-full bg-gray-700 text-gray-400 py-3 rounded-xl font-medium cursor-not-allowed">
+          قريباً
+        </button>
+      </div>
+    </div>
+
+    <div v-if="!activeForm" class="grid grid-cols-2 gap-3 mb-4">
+      <button 
+        @click="activeForm = 'receive'"
+        class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 active:scale-95 transition-transform">
+        <ArrowDownLeftIcon size="24" class="text-green-400" />
+        <span class="text-sm">استلام</span>
+      </button>
+      <button 
+        @click="activeForm = 'send'"
+        class="bg-gray-900 text-white p-4 rounded-xl flex flex-col items-center gap-2 active:scale-95 transition-transform">
+        <ArrowUpRightIcon size="24" class="text-red-400" />
+        <span class="text-sm">إرسال</span>
+      </button>
+    </div>
+
+    <!-- نموذج الاستلام -->
+    <div v-if="activeForm === 'receive'" class="bg-gray-900 rounded-xl p-4 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold flex items-center gap-2">
+          <ArrowDownLeftIcon size="18" class="text-green-400" />
+          استلام SYT
+        </h3>
+        <button 
+          @click="activeForm = null" 
+          class="text-gray-400 active:scale-95 transition-transform">
+          ✕
+        </button>
+      </div>
+      
+      <p class="text-gray-400 text-sm mb-3">شارك هذا العنوان لاستلام SYT:</p>
+      
+      <div class="bg-black/30 rounded-lg p-3 mb-3">
+        <code class="text-sm text-white break-all block mb-2">{{ user?.wallet_address }}</code>
+        <button 
+          @click="copyAddress"
+          class="w-full bg-blue-500 text-white py-2 rounded-lg text-sm active:scale-95 transition-transform">
+          نسخ العنوان
+        </button>
+      </div>
+    </div>
+
+    <!-- نموذج الإرسال -->
+    <div v-if="activeForm === 'send'" class="bg-gray-900 rounded-xl p-4 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold flex items-center gap-2">
+          <ArrowUpRightIcon size="18" class="text-red-400" />
+          إرسال SYT
+        </h3>
+        <button 
+          @click="activeForm = null" 
+          class="text-gray-400 active:scale-95 transition-transform">
+          ✕
+        </button>
+      </div>
+
+      <!-- خطأ -->
+      <div v-if="sendError" class="bg-red-900/50 border border-red-500 rounded-lg p-3 mb-3">
+        <p class="text-red-300 text-sm">{{ sendError }}</p>
+      </div>
+
+      <!-- نجاح -->
+      <div v-if="sendSuccess" class="bg-green-900/50 border border-green-500 rounded-lg p-3 mb-3">
+        <p class="text-green-300 text-sm">✅ تم الإرسال بنجاح!</p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-gray-400 text-sm block mb-1">عنوان المستلم</label>
+          <input 
+            v-model="sendForm.toAddress"
+            type="text"
+            placeholder="0x..."
+            class="w-full bg-black/30 text-white p-3 rounded-lg text-sm border border-gray-700 focus:border-blue-500 outline-none"/>
+        </div>
+
+        <div>
+          <label class="text-gray-400 text-sm block mb-1">المبلغ (SYT)</label>
+          <input 
+            v-model="sendForm.amount"
+            type="number"
+            placeholder="0.00"
+            step="0.00000001"
+            min="0"
+            class="w-full bg-black/30 text-white p-3 rounded-lg text-sm border border-gray-700 focus:border-blue-500 outline-none"/>
+          <p class="text-gray-500 text-xs mt-1">الرصيد المتاح: {{ formatBalance(user?.balance) }} SYT</p>
+        </div>
+
+        <button 
+          @click="handleSend"
+          :disabled="sending || !sendForm.toAddress || !sendForm.amount || sendForm.amount <= 0"
+          class="w-full bg-red-500 text-white py-3 rounded-lg text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ sending ? 'جارٍ الإرسال...' : 'إرسال' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- سجل المعاملات -->
+    <div class="bg-gray-900 rounded-xl p-4">
+      <h3 class="font-semibold mb-4 flex items-center gap-2">
+        <HistoryIcon size="18" /> سجل المعاملات
+      </h3>
+
+      <div v-if="transactions.length === 0" class="text-center text-gray-500 py-4">لا توجد معاملات</div>
+
+      <div v-else class="space-y-3">
+        <div v-for="tx in transactions" :key="tx.id" class="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
+          <div class="flex items-center gap-3">
+            <div class="bg-gray-800 p-2 rounded-lg">
+              <component :is="getTxIcon(tx.type)" size="20" :class="getTxColor(tx.type)" />
+            </div>
+            <div>
+              <p class="font-medium text-sm">{{ getTxLabel(tx.type) }}</p>
+              <p class="text-xs text-gray-500">{{ formatDate(tx.created_at) }}</p>
+            </div>
+          </div>
+          
+          <div class="text-right">
+            <p :class="['font-bold', getTxColor(tx.type)]">{{ formatTxAmount(tx.amount, tx.type) }}</p>
+            <p class="text-xs text-gray-500">{{ tx.status === 'completed' ? 'مكتمل' : tx.status }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted } from 'vue'
+import { supabaseAdmin } from '../config/supabaseAdmin'
+import { ArrowDownLeft as ArrowDownLeftIcon, ArrowUpRight as ArrowUpRightIcon, ArrowUpLeft as ArrowUpLeftIcon, History as HistoryIcon, Copy as CopyIcon, CheckCircle2 as CheckCircleIcon, Clock as ClockIcon, X as XIcon } from 'lucide-vue-next'
+
+export default {
+  name: 'Wallet',
+  components: { ArrowDownLeftIcon, ArrowUpRightIcon, ArrowUpLeftIcon, HistoryIcon, CopyIcon, XIcon },
+  props: { 
+    user: { 
+      type: Object, 
+      required: true 
+    } 
+  },
+  setup(props) {
+    const transactions = ref([])
+    
+    const activeForm = ref(null)
+    const showWithdrawModal = ref(false)
+    
+    const sendForm = ref({
+      toAddress: '',
+      amount: ''
+    })
+    const sending = ref(false)
+    const sendError = ref('')
+    const sendSuccess = ref(false)
+
+    onMounted(() => fetchTransactions())
+
+    const fetchTransactions = async () => {
+      const { data: txs } = await supabaseAdmin
+        .from('transactions')
+        .select('*')
+        .eq('user_id', props.user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      transactions.value = txs || []
+    }
+
+    const formatBalance = (val) => parseFloat(val || 0).toFixed(4)
+    const formatUsd = (val) => ((val || 0) * 0.0001).toFixed(2)
+    const formatDate = (date) => new Date(date).toLocaleDateString('ar-SA')
+    
+    const copyAddress = () => {
+      if (props.user?.wallet_address) {
+        navigator.clipboard.writeText(props.user.wallet_address)
+      }
+    }
+
+    const handleSend = async () => {
+      sending.value = true
+      sendError.value = ''
+      sendSuccess.value = false
+
+      try {
+        const amount = parseFloat(sendForm.value.amount)
+        const toAddress = sendForm.value.toAddress.trim()
+
+        // التحققات
+        if (!toAddress.startsWith('0x')) {
+          throw new Error('عنوان غير صالح (يجب أن يبدأ بـ 0x)')
+        }
+        
+        if (amount <= 0) {
+          throw new Error('المبلغ يجب أن يكون أكبر من صفر')
+        }
+        
+        if (amount > props.user.balance) {
+          throw new Error('رصيد غير كافٍ')
+        }
+
+        // إيجاد المستلم
+        const { data: receiver, error: receiverError } = await supabaseAdmin
+          .from('users')
+          .select('id, balance')
+          .eq('wallet_address', toAddress)
+          .single()
+
+        if (receiverError || !receiver) {
+          throw new Error('المستلم غير موجود')
+        }
+
+        if (receiver.id === props.user.id) {
+          throw new Error('لا يمكن الإرسال لنفسك')
+        }
+
+        // خصم من المرسل
+        const newBalance = props.user.balance - amount
+        const { error: senderError } = await supabaseAdmin
+          .from('users')
+          .update({ balance: newBalance })
+          .eq('id', props.user.id)
+
+        if (senderError) throw new Error('فشل الخصم')
+
+        // إضافة للمستلم
+        const receiverNewBalance = receiver.balance + amount
+        const { error: receiverUpdateError } = await supabaseAdmin
+          .from('users')
+          .update({ balance: receiverNewBalance })
+          .eq('id', receiver.id)
+
+        if (receiverUpdateError) {
+          // إرجاع الرصيد
+          await supabaseAdmin
+            .from('users')
+            .update({ balance: props.user.balance })
+            .eq('id', props.user.id)
+          throw new Error('فشل الإضافة للمستلم')
+        }
+
+        // تسجيل المعاملة
+        const { error: txError } = await supabaseAdmin
+          .from('transactions')
+          .insert({
+            user_id: props.user.id,
+            type: 'withdraw',
+            amount: amount,
+            status: 'completed',
+            to_address: toAddress,
+            from_address: props.user.wallet_address,
+            description: `إرسال إلى ${toAddress.substring(0, 10)}...`,
+            created_at: new Date().toISOString()
+          })
+
+       if (txError) throw new Error('فشل تسجيل المعاملة')
+       
+        // تسجيل معاملة المستلم
+       const { error: receiverTxError } = await supabaseAdmin
+       .from('transactions')
+       .insert({
+        user_id: receiver.id,
+        type: 'deposit',
+        amount: amount,
+        status: 'completed',
+        from_address: props.user.wallet_address,
+        to_address: toAddress,
+        description: `استلام من ${props.user.wallet_address.substring(0, 10)}...`,
+        created_at: new Date().toISOString()
+       })
+
+      if (receiverTxError) {
+      console.error('خطأ في تسجيل معاملة المستلم:', receiverTxError)
+     }
+
+        
+        // تحديث المحلي
+        props.user.balance = newBalance
+        sendSuccess.value = true
+        sendForm.value = { toAddress: '', amount: '' }
+        
+        // تحديث السجل
+        fetchTransactions()
+
+        // إغلاق النموذج بعد 2 ثانية
+        setTimeout(() => {
+          activeForm.value = null
+          sendSuccess.value = false
+        }, 2000)
+
+      } catch (e) {
+        sendError.value = e.message || 'حدث خطأ'
+      } finally {
+        sending.value = false
+      }
+    }
+
+    const getTxIcon = (type) => ({ 
+      deposit: ArrowDownLeftIcon, 
+      withdraw: ArrowUpRightIcon, 
+      reward: CheckCircleIcon, 
+      referral_bonus: CheckCircleIcon, 
+      task_bonus: CheckCircleIcon 
+    }[type] || ClockIcon)
+
+    const getTxColor = (type) => ({ 
+      deposit: 'text-green-400', 
+      withdraw: 'text-red-400', 
+      reward: 'text-green-400', 
+      referral_bonus: 'text-green-400', 
+      task_bonus: 'text-green-400' 
+    }[type] || 'text-gray-400')
+
+    const getTxLabel = (type) => ({ 
+      deposit: 'إيداع', 
+      withdraw: 'إرسال', 
+      reward: 'مكافأة', 
+      referral_bonus: 'إحالة', 
+      task_bonus: 'مهمة' 
+    }[type] || type)
+
+    const formatTxAmount = (amount, type) => {
+      const prefix = ['deposit', 'reward', 'referral_bonus', 'task_bonus'].includes(type) ? '+' : '-'
+      return `${prefix}${amount}`
+    }
+
+    return { 
+      transactions, 
+      activeForm,
+      showWithdrawModal,
+      sendForm,
+      sending,
+      sendError,
+      sendSuccess,
+      formatBalance, 
+      formatUsd, 
+      formatDate, 
+      copyAddress,
+      handleSend,
+      getTxIcon, 
+      getTxColor, 
+      getTxLabel, 
+      formatTxAmount 
+    }
+  }
+}
+</script>
