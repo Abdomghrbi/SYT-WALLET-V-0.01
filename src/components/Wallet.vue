@@ -32,7 +32,11 @@
         <!-- خيارات وسائل الدفع -->
         <div class="grid grid-cols-3 gap-4 mb-6">
           
-          
+          <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
+            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">SYT</div>
+            <span class="text-gray-300 text-xs">SY TOKEN</span>
+          </div>
+        </div>
           
           <!-- USDT -->
           <div class="bg-gray-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700">
