@@ -9,7 +9,7 @@
       </div>
       <div class="bg-gray-900 rounded-xl p-4 text-center">
         <GiftIcon size="24" class="mx-auto mb-2 text-green-400" />
-        <p class="text-2xl font-bold text-white">{{ formatBalance(user?.referral_earnings) }}</p>
+        <p class="text-2xl font-bold text-white">{{ formatBalance(referral?.earnings_percent) }}</p>
         <p class="text-xs text-gray-400">أرباحك</p>
       </div>
     </div>
