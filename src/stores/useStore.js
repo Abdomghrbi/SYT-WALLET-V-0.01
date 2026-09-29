@@ -152,20 +152,33 @@ export const useStore = defineStore('main', {
     },
 
     async fetchUserData() {
-      if (!this.user) return
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', this.user.id)
-        .single()
+    async fetchUserData() {
+  if (!this.user) return
 
-      if (error) {
-        console.error('خطأ في جلب البيانات:', error)
-        return
-      }
-      this.user = data
-    },
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', this.user.id)
+    .single()
 
+  if (error) {
+    console.error('خطأ في جلب البيانات:', error)
+    return
+  }
+
+  const { count, error: countError } = await supabase
+    .from('referrals')
+    .select('*', { count: 'exact', head: true })
+    .eq('referrer_code', data.referral_code)
+
+  if (countError) {
+    console.error('خطأ في حساب الإحالات:', countError)
+  } else {
+    data.referral_count = count || 0
+  }
+
+  this.user = data
+    }
 
     async incrementTasks() {
       if (!this.user) return
