@@ -22,8 +22,12 @@ export const useStore = defineStore('main', {
 
   actions: {
     async checkAuth() {
-      this.isLoading = false
-    },
+  
+  if (this.user) {
+    await this.fetchUserData()
+  }
+  this.isLoading = false
+  }
 
     async login() {
       try {
@@ -120,10 +124,11 @@ export const useStore = defineStore('main', {
           throw createError
         }
 
-        this.user = newUser
+        this.user = user
         this.isAuthenticated = true
-        return { success: true, user: newUser }
-
+        await this.fetchUserData()   
+        return { success: true, user: this.user }
+        
       } catch (error) {
         console.error('خطأ في تسجيل الدخول:', error)
         return { success: false, error: error.message }
