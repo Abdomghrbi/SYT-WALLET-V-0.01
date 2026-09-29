@@ -1,4 +1,3 @@
-
 import { defineStore } from 'pinia'
 import { supabase } from '../config/supabase'
 import { supabaseAdmin } from '../config/supabaseAdmin'
@@ -127,7 +126,7 @@ export const useStore = defineStore('main', {
         this.user = user
         this.isAuthenticated = true
         await this.fetchUserData()   
-        return { success: true, user: this.user }
+        return { success: true, user: this.user },
         
       } catch (error) {
         console.error('خطأ في تسجيل الدخول:', error)
