@@ -63,18 +63,19 @@
         >
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-              <span class="text-blue-400 font-bold">{{ ref.referred?.first_name?.[0] || '?' }}</span>
+              <span class="text-blue-400 font-bold">
+                  {{ (ref.referred_username || ref.first_name || '?')[0] }}</span>
             </div>
             <div>
-              <p class="font-medium text-sm">{{ ref.referred?.first_name || 'مستخدم' }}</p>
-              <p class="text-xs text-gray-500">@{{ ref.referred?.username || 'unknown' }}</p>
+              <p class="font-medium text-sm">
+               {{ ref.referred_username || ref.first_name || 'مستخدم' }}</p>
+               <p class="text-xs text-gray-500">@{{ ref.referred?.username || 'unknown' }}</p>
             </div>
           </div>
           
           <div class="text-right">
-            <p class="text-green-400 font-bold text-sm">+{{ ref.referrer_bonus }} SYT</p>
-            <p class="text-xs text-gray-500">{{ formatDate(ref.created_at) }}</p>
-          </div>
+           <p class="text-xs text-gray-500">{{ formatDate(ref.created_at) }}</p>
+         </div>
         </div>
       </div>
     </div>
@@ -109,20 +110,42 @@ export default {
       }
     })
 
-    const fetchReferrals = async () => {
-      const { data } = await supabase
-       .from('referrals')
-        .select(`*,referred:referred_id (first_name, username, created_at)`)
-        .eq('referrer_code', props.user.id)
-        
+const fetchReferrals = async () => {
+  const { data, error } = await supabase
+    .from('referrals')
+    .select('*')
+    .eq('referrer_code', props.user.referral_code)
+    .order('created_at', { ascending: false })
 
-    
-        
-        .order('created_at', { ascending: false })
+  if (error) {
+    console.error('خطأ في جلب الإحالات:', error)
+    referrals.value = []
+    return
+  }
 
-      referrals.value = data || []
-    }
+  if (!data || data.length === 0) {
+    referrals.value = []
+    return
+  }
 
+
+  const noUsername = data.filter(r => !r.referred_username && r.referred_telegram_id)
+  if (noUsername.length > 0) {
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('telegram_id, first_name')
+      .in('telegram_id', noUsername.map(r => r.referred_telegram_id))
+
+    const nameMap = {}
+    usersData?.forEach(u => { nameMap[u.telegram_id] = u.first_name })
+
+    data.forEach(r => {
+      r.first_name = nameMap[r.referred_telegram_id] || null
+    })
+  }
+
+  referrals.value = data
+}
     const formatBalance = (val) => {
       return val ? parseFloat(val).toFixed(4) : '0.0000'
     }
