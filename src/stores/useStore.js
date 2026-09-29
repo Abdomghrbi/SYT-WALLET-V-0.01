@@ -21,12 +21,11 @@ export const useStore = defineStore('main', {
 
   actions: {
     async checkAuth() {
-  
-  if (this.user) {
-    await this.fetchUserData()
-  }
-  this.isLoading = false
-  }
+      if (this.user) {
+        await this.fetchUserData()
+      }
+      this.isLoading = false
+    },
 
     async login() {
       try {
@@ -48,11 +47,11 @@ export const useStore = defineStore('main', {
 
         if (user) {
           console.log('مستخدم موجود:', user.id)
-          
+
           const updates = {}
           if (!user.wallet_address) updates.wallet_address = generateWalletAddress(user.telegram_id)
           if (!user.referral_code) updates.referral_code = generateReferralCode()
-          
+
           if (Object.keys(updates).length > 0) {
             const { data: updatedUser } = await supabaseAdmin
               .from('users')
@@ -62,15 +61,16 @@ export const useStore = defineStore('main', {
               .single()
             if (updatedUser) Object.assign(user, updatedUser)
           }
-          
+
           await supabaseAdmin
             .from('users')
             .update({ last_login: new Date().toISOString() })
             .eq('id', user.id)
 
-          this.user = newUser
+          this.user = user
           this.isAuthenticated = true
-          return { success: true, user }
+          await this.fetchUserData()
+          return { success: true, user: this.user }
         }
 
         const { data: newUser, error: createError } = await supabaseAdmin
@@ -80,7 +80,6 @@ export const useStore = defineStore('main', {
             username: tgUser.username,
             first_name: tgUser.first_name,
             last_name: tgUser.last_name,
-            //photo_url: tgUser.photo_url,
             language_code: tgUser.language_code || 'ar',
             wallet_address: generateWalletAddress(tgUser.id),
             referral_code: generateReferralCode(),
@@ -99,12 +98,12 @@ export const useStore = defineStore('main', {
               .select('*')
               .eq('telegram_id', tgUser.id)
               .single()
-            
+
             if (existingUser) {
               const updates = {}
               if (!existingUser.wallet_address) updates.wallet_address = generateWalletAddress(existingUser.telegram_id)
               if (!existingUser.referral_code) updates.referral_code = generateReferralCode()
-              
+
               if (Object.keys(updates).length > 0) {
                 const { data: updatedUser } = await supabaseAdmin
                   .from('users')
@@ -114,20 +113,21 @@ export const useStore = defineStore('main', {
                   .single()
                 if (updatedUser) Object.assign(existingUser, updatedUser)
               }
-              
+
               this.user = existingUser
               this.isAuthenticated = true
-              return { success: true, user: existingUser }
+              await this.fetchUserData()
+              return { success: true, user: this.user }
             }
           }
           throw createError
         }
 
-        this.user = user
+        this.user = newUser
         this.isAuthenticated = true
-        await this.fetchUserData()   
-        return { success: true, user: this.user },
-        
+        await this.fetchUserData()
+        return { success: true, user: this.user }
+
       } catch (error) {
         console.error('خطأ في تسجيل الدخول:', error)
         return { success: false, error: error.message }
@@ -142,7 +142,7 @@ export const useStore = defineStore('main', {
     async updateBalance(amount) {
       if (!this.user) return
       const newBalance = (this.user.balance || 0) + amount
-      
+
       const { error } = await supabase
         .from('users')
         .update({ balance: newBalance })
@@ -156,49 +156,48 @@ export const useStore = defineStore('main', {
     },
 
     async fetchUserData() {
-    async fetchUserData() {
-  if (!this.user) return
+      if (!this.user) return
 
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', this.user.id)
-    .single()
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', this.user.id)
+        .single()
 
-  if (error) {
-    console.error('خطأ في جلب البيانات:', error)
-    return
-  }
+      if (error) {
+        console.error('خطأ في جلب البيانات:', error)
+        return
+      }
 
-  const { count, error: countError } = await supabase
-    .from('referrals')
-    .select('*', { count: 'exact', head: true })
-    .eq('referrer_code', data.referral_code)
+      const { count, error: countError } = await supabase
+        .from('referrals')
+        .select('*', { count: 'exact', head: true })
+        .eq('referrer_code', data.referral_code)
 
-  if (countError) {
-    console.error('خطأ في حساب الإحالات:', countError)
-  } else {
-    data.referral_count = count || 0
-  }
+      if (countError) {
+        console.error('خطأ في حساب الإحالات:', countError)
+      } else {
+        data.referral_count = count || 0
+      }
 
-  this.user = data
-    }
+      this.user = data
+    },
 
     async incrementTasks() {
       if (!this.user) return
-      
+
       const newCount = (this.user.tasks_completed || 0) + 1
-      
+
       const { error } = await supabaseAdmin
         .from('users')
         .update({ tasks_completed: newCount })
         .eq('id', this.user.id)
-      
+
       if (error) {
         console.error('خطأ في تحديث المهام:', error)
         return
       }
-      
+
       this.user.tasks_completed = newCount
     }
   }
