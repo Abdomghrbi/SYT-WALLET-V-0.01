@@ -68,7 +68,7 @@ export const useStore = defineStore('main', {
             .update({ last_login: new Date().toISOString() })
             .eq('id', user.id)
 
-          this.user = user
+          this.user = newUser
           this.isAuthenticated = true
           return { success: true, user }
         }
